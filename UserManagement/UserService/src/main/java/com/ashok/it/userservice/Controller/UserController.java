@@ -10,12 +10,19 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping("/health")
+    public Mono<Map<String, String>> health() {
+        return Mono.just(Map.of("status", "UP", "service", "UserService"));
+    }
 
     @PostMapping("/register")
     public Mono<UserResponse> registerUser(
