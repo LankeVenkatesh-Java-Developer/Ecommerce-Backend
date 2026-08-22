@@ -24,5 +24,5 @@ RUN ./mvnw clean package -DskipTests
 # Expose port (Render uses port 8080 by default)
 EXPOSE 8080
 
-# Run the application
-CMD ["java", "-jar", "target/UserService-0.0.1-SNAPSHOT.jar"]
+# Run the application with prod profile
+CMD ["java", "-jar", "-Dspring.profiles.active=prod", "target/UserService-0.0.1-SNAPSHOT.jar"]
