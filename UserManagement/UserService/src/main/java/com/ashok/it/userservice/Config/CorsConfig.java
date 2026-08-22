@@ -20,18 +20,20 @@ public class CorsConfig {
         corsConfig.setAllowedOrigins(Arrays.asList(
             "https://ecommerce-front-end-eta.vercel.app",
             "http://localhost:5173",
-            "http://localhost:3000",
-            "*"
+            "http://localhost:3000"
         ));
         
         // Allow common HTTP methods
-        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
         
         // Allow common headers
-        corsConfig.setAllowedHeaders(List.of("*"));
+        corsConfig.setAllowedHeaders(Arrays.asList("*"));
         
         // Allow credentials
         corsConfig.setAllowCredentials(true);
+        
+        // Expose headers
+        corsConfig.setExposedHeaders(Arrays.asList("Content-Type", "Authorization"));
         
         // Set max age for preflight requests
         corsConfig.setMaxAge(3600L);
