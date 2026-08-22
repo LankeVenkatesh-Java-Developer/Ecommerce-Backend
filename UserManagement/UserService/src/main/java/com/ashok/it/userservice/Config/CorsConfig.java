@@ -16,8 +16,13 @@ public class CorsConfig {
     public CorsWebFilter corsWebFilter() {
         CorsConfiguration corsConfig = new CorsConfiguration();
         
-        // Allow all origins for development (restrict in production)
-        corsConfig.setAllowedOrigins(List.of("*"));
+        // Allow specific origins including Vercel frontend and local development
+        corsConfig.setAllowedOrigins(Arrays.asList(
+            "https://ecommerce-front-end-eta.vercel.app",
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "*"
+        ));
         
         // Allow common HTTP methods
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
