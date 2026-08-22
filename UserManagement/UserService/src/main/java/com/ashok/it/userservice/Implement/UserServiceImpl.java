@@ -11,6 +11,7 @@ import com.ashok.it.userservice.Exception.UserNotFoundException;
 import com.ashok.it.userservice.Event.UserEventPublisher;
 import com.ashok.it.userservice.Service.NotificationServiceClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
@@ -19,6 +20,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
@@ -64,8 +66,17 @@ public class UserServiceImpl implements UserService {
                     return userRepository.save(user)
                             .flatMap(savedUser -> {
                                 UserResponse response = mapToResponse(savedUser);
+                                // Make external service calls fault-tolerant - don't fail registration if they're unavailable
                                 return userEventPublisher.publishUserCreatedEvent(response)
+                                        .onErrorResume(error -> {
+                                            log.error("Failed to publish user event: {}", error.getMessage());
+                                            return Mono.empty();
+                                        })
                                         .then(notificationServiceClient.sendWelcomeEmail(user.getEmail(), user.getId()))
+                                        .onErrorResume(error -> {
+                                            log.error("Failed to send welcome email: {}", error.getMessage());
+                                            return Mono.empty();
+                                        })
                                         .thenReturn(response);
                             });
                 });
