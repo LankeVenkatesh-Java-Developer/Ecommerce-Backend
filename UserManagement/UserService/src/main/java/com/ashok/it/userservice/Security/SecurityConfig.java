@@ -14,7 +14,10 @@ import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.web.server.ServerWebExchange;
+import org.springframework.web.cors.CorsConfiguration;
 import reactor.core.publisher.Mono;
+
+import java.util.Arrays;
 
 import java.nio.charset.StandardCharsets;
 
@@ -42,6 +45,21 @@ public class SecurityConfig {
 
         http
                 .csrf(csrf -> csrf.disable())
+
+                .cors(cors -> cors.configurationSource(request -> {
+                    CorsConfiguration config = new CorsConfiguration();
+                    config.setAllowedOrigins(Arrays.asList(
+                        "https://ecommerce-front-end-eta.vercel.app",
+                        "http://localhost:5173",
+                        "http://localhost:3000"
+                    ));
+                    config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
+                    config.setAllowedHeaders(Arrays.asList("*"));
+                    config.setAllowCredentials(true);
+                    config.setExposedHeaders(Arrays.asList("Content-Type", "Authorization"));
+                    config.setMaxAge(3600L);
+                    return config;
+                }))
 
                 .authorizeExchange(auth -> auth
 
