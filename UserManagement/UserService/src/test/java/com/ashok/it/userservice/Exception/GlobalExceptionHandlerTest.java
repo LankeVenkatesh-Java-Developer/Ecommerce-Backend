@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import reactor.core.publisher.Mono;
+import reactor.test.StepVerifier;
 
 import java.util.Map;
 
@@ -33,13 +35,17 @@ class GlobalExceptionHandlerTest {
             UserNotFoundException exception = new UserNotFoundException("User not found with id: 1");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleUserNotFound(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleUserNotFound(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("status")).isEqualTo(404);
-            assertThat(response.getBody().get("message")).isEqualTo("User not found with id: 1");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+                        assertThat(response.getBody()).isNotNull();
+                        assertThat(response.getBody().get("status")).isEqualTo(404);
+                        assertThat(response.getBody().get("message")).isEqualTo("User not found with id: 1");
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -49,10 +55,14 @@ class GlobalExceptionHandlerTest {
             UserNotFoundException exception = new UserNotFoundException("Custom user not found message");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleUserNotFound(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleUserNotFound(exception);
 
             // Assert
-            assertThat(response.getBody().get("message")).isEqualTo("Custom user not found message");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getBody().get("message")).isEqualTo("Custom user not found message");
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -67,13 +77,17 @@ class GlobalExceptionHandlerTest {
             AddressNotFoundException exception = new AddressNotFoundException("Address not found");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleAddressNotFound(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleAddressNotFound(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("status")).isEqualTo(404);
-            assertThat(response.getBody().get("message")).isEqualTo("Address not found");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+                        assertThat(response.getBody()).isNotNull();
+                        assertThat(response.getBody().get("status")).isEqualTo(404);
+                        assertThat(response.getBody().get("message")).isEqualTo("Address not found");
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -83,10 +97,14 @@ class GlobalExceptionHandlerTest {
             AddressNotFoundException exception = new AddressNotFoundException("Address with id 5 not found for user 2");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleAddressNotFound(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleAddressNotFound(exception);
 
             // Assert
-            assertThat(response.getBody().get("message")).isEqualTo("Address with id 5 not found for user 2");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getBody().get("message")).isEqualTo("Address with id 5 not found for user 2");
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -101,13 +119,17 @@ class GlobalExceptionHandlerTest {
             DuplicateUserException exception = new DuplicateUserException("Email already registered");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleDuplicateUser(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleDuplicateUser(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("status")).isEqualTo(409);
-            assertThat(response.getBody().get("message")).isEqualTo("Email already registered");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+                        assertThat(response.getBody()).isNotNull();
+                        assertThat(response.getBody().get("status")).isEqualTo(409);
+                        assertThat(response.getBody().get("message")).isEqualTo("Email already registered");
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -117,11 +139,15 @@ class GlobalExceptionHandlerTest {
             DuplicateUserException exception = new DuplicateUserException("Mobile number already registered");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleDuplicateUser(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleDuplicateUser(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-            assertThat(response.getBody().get("status")).isEqualTo(409);
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+                        assertThat(response.getBody().get("status")).isEqualTo(409);
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -136,13 +162,17 @@ class GlobalExceptionHandlerTest {
             InvalidPasswordException exception = new InvalidPasswordException("Password and confirm password do not match");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleInvalidPassword(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleInvalidPassword(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("status")).isEqualTo(400);
-            assertThat(response.getBody().get("message")).isEqualTo("Password and confirm password do not match");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(response.getBody()).isNotNull();
+                        assertThat(response.getBody().get("status")).isEqualTo(400);
+                        assertThat(response.getBody().get("message")).isEqualTo("Password and confirm password do not match");
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -152,11 +182,15 @@ class GlobalExceptionHandlerTest {
             InvalidPasswordException exception = new InvalidPasswordException("Password is too weak");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleInvalidPassword(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleInvalidPassword(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-            assertThat(response.getBody().get("message")).isEqualTo("Password is too weak");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+                        assertThat(response.getBody().get("message")).isEqualTo("Password is too weak");
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -171,13 +205,17 @@ class GlobalExceptionHandlerTest {
             BadCredentialsException exception = new BadCredentialsException("Invalid credentials");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleBadCredentials(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleBadCredentials(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(response.getBody()).isNotNull();
-            assertThat(response.getBody().get("status")).isEqualTo(401);
-            assertThat(response.getBody().get("message")).isEqualTo("Invalid email or password");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+                        assertThat(response.getBody()).isNotNull();
+                        assertThat(response.getBody().get("status")).isEqualTo(401);
+                        assertThat(response.getBody().get("message")).isEqualTo("Invalid email or password");
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -187,10 +225,14 @@ class GlobalExceptionHandlerTest {
             BadCredentialsException exception = new BadCredentialsException("Some other error message");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleBadCredentials(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleBadCredentials(exception);
 
             // Assert
-            assertThat(response.getBody().get("message")).isEqualTo("Invalid email or password");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getBody().get("message")).isEqualTo("Invalid email or password");
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -200,11 +242,15 @@ class GlobalExceptionHandlerTest {
             BadCredentialsException exception = new BadCredentialsException(null);
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleBadCredentials(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleBadCredentials(exception);
 
             // Assert
-            assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-            assertThat(response.getBody().get("message")).isEqualTo("Invalid email or password");
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+                        assertThat(response.getBody().get("message")).isEqualTo("Invalid email or password");
+                    })
+                    .verifyComplete();
         }
     }
 
@@ -219,11 +265,15 @@ class GlobalExceptionHandlerTest {
             UserNotFoundException exception = new UserNotFoundException("Test message");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleUserNotFound(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleUserNotFound(exception);
 
             // Assert
-            assertThat(response.getBody()).containsKeys("status", "message");
-            assertThat(response.getBody()).hasSize(2);
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getBody()).containsKeys("status", "message");
+                        assertThat(response.getBody()).hasSize(2);
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -233,10 +283,14 @@ class GlobalExceptionHandlerTest {
             AddressNotFoundException exception = new AddressNotFoundException("Test");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleAddressNotFound(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleAddressNotFound(exception);
 
             // Assert
-            assertThat(response.getBody().get("status")).isInstanceOf(Integer.class);
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getBody().get("status")).isInstanceOf(Integer.class);
+                    })
+                    .verifyComplete();
         }
 
         @Test
@@ -246,10 +300,14 @@ class GlobalExceptionHandlerTest {
             DuplicateUserException exception = new DuplicateUserException("Test message");
 
             // Act
-            ResponseEntity<Map<String, Object>> response = globalExceptionHandler.handleDuplicateUser(exception);
+            Mono<ResponseEntity<Map<String, Object>>> responseMono = globalExceptionHandler.handleDuplicateUser(exception);
 
             // Assert
-            assertThat(response.getBody().get("message")).isInstanceOf(String.class);
+            StepVerifier.create(responseMono)
+                    .assertNext(response -> {
+                        assertThat(response.getBody().get("message")).isInstanceOf(String.class);
+                    })
+                    .verifyComplete();
         }
     }
 }
