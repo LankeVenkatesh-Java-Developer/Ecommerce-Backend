@@ -1,0 +1,72 @@
+package com.venkatesh.it.usermanagementservice.security;
+
+import com.venkatesh.it.usermanagementservice.model.User;
+import com.venkatesh.it.usermanagementservice.model.enums.UserRole;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.Collection;
+import java.util.Collections;
+
+@Data
+@Builder
+@AllArgsConstructor
+public class UserPrincipal implements UserDetails {
+
+    private Long id;
+    private String email;
+    private String mobileNumber;
+    private String password;
+    private UserRole role;
+    private boolean enabled;
+
+    public static UserPrincipal create(User user) {
+        return UserPrincipal.builder()
+                .id(user.getId())
+                .email(user.getEmail())
+                .mobileNumber(user.getMobileNumber())
+                .password(user.getPassword())
+                .role(user.getRole())
+                .enabled(user.getStatus() == com.venkatesh.it.usermanagementservice.model.enums.UserStatus.ACTIVE)
+                .build();
+    }
+
+    @Override
+    public String getUsername() {
+        return email;
+    }
+
+    @Override
+    public String getPassword() {
+        return password;
+    }
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
+    }
+}
