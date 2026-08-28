@@ -54,10 +54,15 @@ public class AddressController {
         return ResponseEntity.ok(responses);
     }
 
-    @PutMapping("/{id}/users/{userId}")
+    @PutMapping("/users/{userId}/{addressId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<AddressResponse> updateAddress(@PathVariable Long id, @PathVariable Long userId, @Valid @RequestBody AddressRequest request) {
-        AddressResponse response = addressService.updateAddress(id, userId, request);
+    public ResponseEntity<AddressResponse> updateAddress(
+            @PathVariable Long userId,
+            @PathVariable Long addressId,
+            @Valid @RequestBody AddressRequest request) {
+
+        AddressResponse response = addressService.updateAddress(addressId, userId, request);
+
         return ResponseEntity.ok(response);
     }
 
@@ -68,10 +73,14 @@ public class AddressController {
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{id}/users/{userId}")
+    @DeleteMapping("/users/{userId}/{addressId}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN') or #userId == authentication.principal.id")
-    public ResponseEntity<Void> deleteAddress(@PathVariable Long id, @PathVariable Long userId) {
-        addressService.deleteAddress(id, userId);
+    public ResponseEntity<Void> deleteAddress(
+            @PathVariable Long userId,
+            @PathVariable Long addressId) {
+
+        addressService.deleteAddress(addressId, userId);
+
         return ResponseEntity.noContent().build();
     }
 }
