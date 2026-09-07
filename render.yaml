@@ -7,15 +7,15 @@ services:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
           name: user-management-db
-          property: connectionString
+          property: JDBC_DATABASE_URL
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: user-management-db
-          property: user
+          property: JDBC_DATABASE_USERNAME
       - key: SPRING_DATASOURCE_PASSWORD
         fromDatabase:
           name: user-management-db
-          property: password
+          property: JDBC_DATABASE_PASSWORD
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
       - key: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
