@@ -158,6 +158,12 @@ public class UserService {
         userRepository.delete(user);
     }
 
+    public String[] getUserRoles(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
+        return new String[]{user.getRole().name()};
+    }
+
     private void validateEmail(String email) {
         if (!PasswordValidator.isValidEmail(email)) {
             throw new BadRequestException(PasswordValidator.getEmailValidationMessage());

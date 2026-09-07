@@ -105,4 +105,11 @@ public class UserController {
         userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
+
+    @GetMapping("/{id}/roles")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")
+    public ResponseEntity<String[]> getUserRoles(@PathVariable Long id) {
+        String[] roles = userService.getUserRoles(id);
+        return ResponseEntity.ok(roles);
+    }
 }
