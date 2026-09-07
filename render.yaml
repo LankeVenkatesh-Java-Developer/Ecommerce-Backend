@@ -3,8 +3,6 @@ services:
     name: user-management-service
     env: docker
     plan: free
-    dockerContext: ./user-management-service
-    dockerfilePath: Dockerfile
     envVars:
       - key: SPRING_DATASOURCE_URL
         fromDatabase:
