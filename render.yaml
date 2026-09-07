@@ -4,18 +4,6 @@ services:
     env: docker
     plan: free
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: user-management-db
-          property: connectionString
-      - key: DB_USER
-        fromDatabase:
-          name: user-management-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: user-management-db
-          property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
       - key: SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT
@@ -24,9 +12,3 @@ services:
         generateValue: true
       - key: APP_JWT_EXPIRATION_IN_MS
         value: 86400000
-
-databases:
-  - name: user-management-db
-    databaseName: user_management_db
-    user: user_management_user
-    plan: free
