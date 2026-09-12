@@ -109,4 +109,14 @@ public class ProductController {
         ProductResponseDTO product = productService.updateProductStatus(id, status);
         return ResponseEntity.ok(product);
     }
+
+    @PutMapping("/{id}/stock")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SYSTEM')")
+    public ResponseEntity<ProductResponseDTO> updateProductStock(
+            @PathVariable Long id,
+            @RequestParam Integer quantity
+    ) {
+        ProductResponseDTO product = productService.updateProductStock(id, quantity);
+        return ResponseEntity.ok(product);
+    }
 }

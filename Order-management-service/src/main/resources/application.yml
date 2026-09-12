@@ -30,6 +30,10 @@ razorpay:
     id: ${RAZORPAY_KEY_ID:rzp_test_TZyzveIYPdsKvv}
     secret: ${RAZORPAY_KEY_SECRET:szwT6b73xLMK1lTB6m2smero}
 
+products:
+  service:
+    url: ${PRODUCTS_SERVICE_URL:http://localhost:8082}
+
 management:
   endpoints:
     web:

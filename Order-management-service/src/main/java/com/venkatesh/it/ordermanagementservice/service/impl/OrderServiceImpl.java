@@ -10,12 +10,14 @@ import com.venkatesh.it.ordermanagementservice.entity.ShippingAddress;
 import com.venkatesh.it.ordermanagementservice.enums.OrderStatus;
 import com.venkatesh.it.ordermanagementservice.enums.PaymentStatus;
 import com.venkatesh.it.ordermanagementservice.exception.ResourceNotFoundException;
+import com.venkatesh.it.ordermanagementservice.feign.ProductsClient;
 import com.venkatesh.it.ordermanagementservice.repository.OrderRepository;
 import com.venkatesh.it.ordermanagementservice.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClientException;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -30,11 +32,30 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class OrderServiceImpl implements OrderService {
     
     private final OrderRepository orderRepository;
+    private final ProductsClient productsClient;
     private static final AtomicInteger orderSequence = new AtomicInteger(1);
     
     @Override
     public Order createOrder(CreateOrderRequest request) {
         log.info("Creating order for user: {}", request.getUserId());
+        
+        // Validate and check inventory for all products
+        for (OrderItemRequest itemRequest : request.getItems()) {
+            try {
+                ProductsClient.ProductDTO product = productsClient.getProductById(itemRequest.getProductId());
+                if (product == null) {
+                    throw new ResourceNotFoundException("Product not found: " + itemRequest.getProductId());
+                }
+                if (product.quantity() < itemRequest.getQuantity()) {
+                    throw new IllegalStateException("Insufficient stock for product: " + product.name() + 
+                            ". Available: " + product.quantity() + ", Requested: " + itemRequest.getQuantity());
+                }
+                log.info("Product {} has sufficient stock: {}", product.name(), product.quantity());
+            } catch (RestClientException e) {
+                log.error("Failed to validate product inventory for product ID: {}", itemRequest.getProductId(), e);
+                throw new IllegalStateException("Unable to validate product inventory. Please try again later.");
+            }
+        }
         
         Order order = Order.builder()
                 .userId(request.getUserId())
@@ -122,6 +143,20 @@ public class OrderServiceImpl implements OrderService {
         
         if (request.getStatus() != null) {
             validateStatusTransition(order.getStatus(), request.getStatus());
+            
+            // Deduct inventory when order is confirmed
+            if (order.getStatus() == OrderStatus.PENDING && request.getStatus() == OrderStatus.CONFIRMED) {
+                for (OrderItem item : order.getItems()) {
+                    try {
+                        productsClient.updateProductStock(item.getProductId(), -item.getQuantity());
+                        log.info("Deducted {} units of product {} from inventory", item.getQuantity(), item.getProductId());
+                    } catch (RestClientException e) {
+                        log.error("Failed to deduct inventory for product ID: {}", item.getProductId(), e);
+                        throw new IllegalStateException("Failed to update inventory. Order cannot be confirmed.");
+                    }
+                }
+            }
+            
             order.setStatus(request.getStatus());
         }
         
@@ -141,6 +176,18 @@ public class OrderServiceImpl implements OrderService {
         
         if (order.getStatus() == OrderStatus.DELIVERED || order.getStatus() == OrderStatus.REFUNDED) {
             throw new IllegalStateException("Cannot cancel a delivered or refunded order");
+        }
+        
+        // Restore inventory for all items in the order
+        for (OrderItem item : order.getItems()) {
+            try {
+                productsClient.updateProductStock(item.getProductId(), item.getQuantity());
+                log.info("Restored {} units of product {} to inventory", item.getQuantity(), item.getProductId());
+            } catch (RestClientException e) {
+                log.error("Failed to restore inventory for product ID: {}", item.getProductId(), e);
+                // Continue with cancellation even if inventory restore fails
+                // This should be handled by a compensation mechanism in production
+            }
         }
         
         order.setStatus(OrderStatus.CANCELLED);
@@ -178,13 +225,23 @@ public class OrderServiceImpl implements OrderService {
                 }
                 break;
             case CONFIRMED:
-                if (newStatus != OrderStatus.SHIPPED && newStatus != OrderStatus.CANCELLED) {
+                if (newStatus != OrderStatus.PROCESSING && newStatus != OrderStatus.CANCELLED) {
                     throw new IllegalStateException("Invalid status transition from CONFIRMED to " + newStatus);
                 }
                 break;
+            case PROCESSING:
+                if (newStatus != OrderStatus.SHIPPED && newStatus != OrderStatus.CANCELLED) {
+                    throw new IllegalStateException("Invalid status transition from PROCESSING to " + newStatus);
+                }
+                break;
             case SHIPPED:
-                if (newStatus != OrderStatus.DELIVERED) {
+                if (newStatus != OrderStatus.OUT_FOR_DELIVERY && newStatus != OrderStatus.CANCELLED) {
                     throw new IllegalStateException("Invalid status transition from SHIPPED to " + newStatus);
+                }
+                break;
+            case OUT_FOR_DELIVERY:
+                if (newStatus != OrderStatus.DELIVERED) {
+                    throw new IllegalStateException("Invalid status transition from OUT_FOR_DELIVERY to " + newStatus);
                 }
                 break;
             case DELIVERED:

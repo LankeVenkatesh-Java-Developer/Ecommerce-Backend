@@ -1,4 +1,4 @@
-package com.venkatesh.it.productsmanagementservice.security;
+package com.venkatesh.it.cartmanagementservice.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -15,8 +15,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.Collections;
 
-import org.springframework.stereotype.Component;
-
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,10 +24,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        // Allow public GET endpoints without JWT
-        return path.startsWith("/api/products") || 
-               path.startsWith("/api/categories") ||
-               path.startsWith("/actuator");
+        return path.startsWith("/actuator");
     }
 
     @Override
@@ -41,8 +36,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             if (StringUtils.hasText(jwt) && jwtService.validateToken(jwt)) {
                 Long userId = jwtService.getUserIdFromJWT(jwt);
 
-                // Grant USER role by default for authenticated users
-                // Admin operations are protected by @PreAuthorize annotations
+                // For now, grant USER role to all authenticated users
+                // In production, this should call User Management Service to get actual roles
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId,

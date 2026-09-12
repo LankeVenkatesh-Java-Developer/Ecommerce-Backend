@@ -101,6 +101,26 @@ public class ProductService {
         return mapToResponseDTO(updatedProduct);
     }
 
+    public ProductResponseDTO updateProductStock(Long id, Integer quantity) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        
+        int newQuantity = product.getQuantity() + quantity;
+        if (newQuantity < 0) {
+            throw new IllegalStateException("Insufficient stock. Cannot deduct more than available.");
+        }
+        
+        product.setQuantity(newQuantity);
+        if (newQuantity > 0) {
+            product.setStatus(Product.ProductStatus.ACTIVE);
+        } else {
+            product.setStatus(Product.ProductStatus.OUT_OF_STOCK);
+        }
+        
+        Product updatedProduct = productRepository.save(product);
+        return mapToResponseDTO(updatedProduct);
+    }
+
     private ProductListDTO mapToListDTO(Product product) {
         return new ProductListDTO(
                 product.getId(),
