@@ -1,0 +1,169 @@
+version: '3.8'
+
+services:
+  # User Management Service
+  user-service:
+    build: ./user-management-service
+    container_name: user-management-service
+    ports:
+      - "${USER_SERVICE_PORT}:8081"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://user-mysql:3306/user_management_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - APP_JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - user-mysql
+    networks:
+      - ecommerce-network
+    restart: on-failure
+
+  user-mysql:
+    image: mysql:8.0
+    container_name: user-mysql
+    ports:
+      - "${USER_MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_DATABASE=user_management_db
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - user-mysql-data:/var/lib/mysql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Products Management Service
+  products-service:
+    build: ./Products-management-service
+    container_name: products-management-service
+    ports:
+      - "${PRODUCTS_SERVICE_PORT}:8082"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://products-mysql:3306/products_management_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - APP_JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - products-mysql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  products-mysql:
+    image: mysql:8.0
+    container_name: products-mysql
+    ports:
+      - "${PRODUCTS_MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_DATABASE=products_management_db
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - products-mysql-data:/var/lib/mysql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Order Management Service
+  order-service:
+    build: ./Order-management-service
+    container_name: order-management-service
+    ports:
+      - "${ORDER_SERVICE_PORT}:8084"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://order-mysql:3306/order_service_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - SPRING_SECURITY_JWT_SECRET=${JWT_SECRET}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+    depends_on:
+      - order-mysql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  order-mysql:
+    image: mysql:8.0
+    container_name: order-mysql
+    ports:
+      - "${ORDER_MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_DATABASE=order_service_db
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - order-mysql-data:/var/lib/mysql
+      - ./Order-management-service/src/main/resources/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Admin Management Service
+  admin-service:
+    build: ./Admin-management-service
+    container_name: admin-management-service
+    ports:
+      - "${ADMIN_SERVICE_PORT}:8083"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://admin-mysql:3306/admin_management_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${MYSQL_USER}
+      - SPRING_DATASOURCE_PASSWORD=${MYSQL_PASSWORD}
+      - APP_JWT_SECRET=${JWT_SECRET}
+    depends_on:
+      - admin-mysql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+  admin-mysql:
+    image: mysql:8.0
+    container_name: admin-mysql
+    ports:
+      - "${ADMIN_MYSQL_PORT}:3306"
+    environment:
+      - MYSQL_DATABASE=admin_management_db
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+    volumes:
+      - admin-mysql-data:/var/lib/mysql
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+    command: --default-authentication-plugin=mysql_native_password
+
+  # Notification Management Service
+  notification-service:
+    build: ./notification-management-service
+    container_name: notification-management-service
+    ports:
+      - "${NOTIFICATION_SERVICE_PORT}:8085"
+    environment:
+      - SPRING_MAIL_HOST=${SPRING_MAIL_HOST}
+      - SPRING_MAIL_PORT=${SPRING_MAIL_PORT}
+      - SPRING_MAIL_USERNAME=${SPRING_MAIL_USERNAME}
+      - SPRING_MAIL_PASSWORD=${SPRING_MAIL_PASSWORD}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_WHATSAPP_FROM_NUMBER=${TWILIO_WHATSAPP_FROM_NUMBER}
+    networks:
+      - ecommerce-network
+    restart: unless-stopped
+
+volumes:
+  user-mysql-data:
+  products-mysql-data:
+  order-mysql-data:
+  admin-mysql-data:
+
+networks:
+  ecommerce-network:
+    driver: bridge

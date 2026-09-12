@@ -1,0 +1,46 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: order-service
+  
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/order_service_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:Venky}
+    password: ${SPRING_DATASOURCE_PASSWORD:Venky@314}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+  
+  security:
+    jwt:
+      secret: ${SPRING_SECURITY_JWT_SECRET:mySecretKeyForJWTTokenGenerationWhichShouldBeLongEnoughForHS512Algorithm}
+      expiration: 86400000
+
+razorpay:
+  key:
+    id: ${RAZORPAY_KEY_ID:rzp_test_TZyzveIYPdsKvv}
+    secret: ${RAZORPAY_KEY_SECRET:szwT6b73xLMK1lTB6m2smero}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.venkatesh.it.ordermanagementservice: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

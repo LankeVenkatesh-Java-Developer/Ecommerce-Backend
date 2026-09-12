@@ -27,10 +27,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         // Allow public GET endpoints without JWT
-        return path.equals("/api/products") || 
-               path.matches("/api/products/\\d+") ||
-               path.equals("/api/categories") ||
-               path.matches("/api/categories/\\d+");
+        return path.startsWith("/api/products") || 
+               path.startsWith("/api/categories") ||
+               path.startsWith("/actuator");
     }
 
     @Override
