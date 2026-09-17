@@ -2,7 +2,9 @@ package com.venkatesh.it.usermanagementservice.service;
 
 import com.venkatesh.it.usermanagementservice.exception.BadRequestException;
 import com.venkatesh.it.usermanagementservice.exception.ResourceNotFoundException;
+import com.venkatesh.it.usermanagementservice.model.Address;
 import com.venkatesh.it.usermanagementservice.model.User;
+import com.venkatesh.it.usermanagementservice.model.dto.AddressResponse;
 import com.venkatesh.it.usermanagementservice.model.dto.RegisterRequest;
 import com.venkatesh.it.usermanagementservice.model.dto.UpdateUserRequest;
 import com.venkatesh.it.usermanagementservice.model.dto.UserResponse;
@@ -53,42 +55,49 @@ public class UserService {
         return mapToUserResponse(savedUser);
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
         return mapToUserResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
         return mapToUserResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public UserResponse getUserByMobileNumber(String mobileNumber) {
         User user = userRepository.findByMobileNumber(mobileNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with mobile number: " + mobileNumber));
         return mapToUserResponse(user);
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getAllUsers() {
         return userRepository.findAll().stream()
                 .map(this::mapToUserResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getUsersByStatus(UserStatus status) {
         return userRepository.findByStatus(status).stream()
                 .map(this::mapToUserResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> getUsersByRole(UserRole role) {
         return userRepository.findByRole(role).stream()
                 .map(this::mapToUserResponse)
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<UserResponse> searchUsers(String keyword) {
         return userRepository.searchByKeyword(keyword).stream()
                 .map(this::mapToUserResponse)
@@ -183,6 +192,10 @@ public class UserService {
     }
 
     private UserResponse mapToUserResponse(User user) {
+        List<AddressResponse> addressResponses = user.getAddresses().stream()
+                .map(this::mapToAddressResponse)
+                .collect(Collectors.toList());
+
         return UserResponse.builder()
                 .id(user.getId())
                 .firstName(user.getFirstName())
@@ -193,6 +206,24 @@ public class UserService {
                 .role(user.getRole())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
+                .addresses(addressResponses)
+                .build();
+    }
+
+    private AddressResponse mapToAddressResponse(Address address) {
+        return AddressResponse.builder()
+                .id(address.getId())
+                .userId(address.getUser() != null ? address.getUser().getId() : null)
+                .addressLine1(address.getAddressLine1())
+                .addressLine2(address.getAddressLine2())
+                .city(address.getCity())
+                .state(address.getState())
+                .country(address.getCountry())
+                .postalCode(address.getPostalCode())
+                .addressType(address.getAddressType())
+                .isDefault(address.getIsDefault())
+                .createdAt(address.getCreatedAt())
+                .updatedAt(address.getUpdatedAt())
                 .build();
     }
 }

@@ -36,6 +36,12 @@ public class OrderServiceImpl implements OrderService {
     private static final AtomicInteger orderSequence = new AtomicInteger(1);
     
     @Override
+    public List<Order> getAllOrders() {
+        log.info("Fetching all orders");
+        return orderRepository.findAll();
+    }
+    
+    @Override
     public Order createOrder(CreateOrderRequest request) {
         log.info("Creating order for user: {}", request.getUserId());
         
@@ -74,9 +80,20 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subtotal = BigDecimal.ZERO;
         
         for (OrderItemRequest itemRequest : request.getItems()) {
+            String productName = itemRequest.getProductName();
+            if (productName == null || productName.isEmpty()) {
+                try {
+                    ProductsClient.ProductDTO product = productsClient.getProductById(itemRequest.getProductId());
+                    productName = product.name();
+                } catch (RestClientException e) {
+                    log.error("Failed to fetch product name for product ID: {}", itemRequest.getProductId(), e);
+                    productName = "Unknown Product";
+                }
+            }
+            
             OrderItem orderItem = OrderItem.builder()
                     .productId(itemRequest.getProductId())
-                    .productName(itemRequest.getProductName())
+                    .productName(productName)
                     .quantity(itemRequest.getQuantity())
                     .price(itemRequest.getPrice())
                     .total(itemRequest.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())))
@@ -211,7 +228,20 @@ public class OrderServiceImpl implements OrderService {
     
     private String generateOrderNumber() {
         String datePrefix = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
-        int sequence = orderSequence.getAndIncrement();
+        
+        // Find the last order number for today
+        String lastOrderNumber = orderRepository.findLastOrderNumberByDatePrefix("ORD-" + datePrefix + "-");
+        
+        int sequence = 1;
+        if (lastOrderNumber != null) {
+            try {
+                String lastSequence = lastOrderNumber.substring(lastOrderNumber.lastIndexOf("-") + 1);
+                sequence = Integer.parseInt(lastSequence) + 1;
+            } catch (Exception e) {
+                log.warn("Failed to parse last order number, starting from 1", e);
+            }
+        }
+        
         return "ORD-" + datePrefix + "-" + String.format("%04d", sequence);
     }
     

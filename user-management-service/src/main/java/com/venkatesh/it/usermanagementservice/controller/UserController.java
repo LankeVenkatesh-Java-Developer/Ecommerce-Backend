@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +22,16 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
+
+    @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
+        com.venkatesh.it.usermanagementservice.security.UserPrincipal userPrincipal = 
+            (com.venkatesh.it.usermanagementservice.security.UserPrincipal) authentication.getPrincipal();
+        Long userId = userPrincipal.getId();
+        UserResponse response = userService.getUserById(userId);
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('SUPER_ADMIN')")

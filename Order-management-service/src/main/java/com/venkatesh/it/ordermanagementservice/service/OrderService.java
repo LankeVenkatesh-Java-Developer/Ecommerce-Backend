@@ -7,6 +7,7 @@ import com.venkatesh.it.ordermanagementservice.entity.Order;
 import java.util.List;
 
 public interface OrderService {
+    List<Order> getAllOrders();
     Order createOrder(CreateOrderRequest request);
     Order getOrderById(Long orderId);
     Order getOrderByOrderNumber(String orderNumber);

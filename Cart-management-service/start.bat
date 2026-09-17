@@ -1,0 +1,3 @@
+@echo off
+echo Starting Cart Management Service on port 8086...
+mvn spring-boot:run

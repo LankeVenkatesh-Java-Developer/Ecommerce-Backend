@@ -32,16 +32,12 @@ public class CreateOrderRequest {
     @NotBlank(message = "Payment method is required")
     private String paymentMethod;
     
-    @NotNull(message = "Subtotal is required")
-    @DecimalMin(value = "0.01", message = "Subtotal must be greater than 0")
     private BigDecimal subtotal;
     
     private BigDecimal shippingCost = BigDecimal.ZERO;
     
     private BigDecimal tax = BigDecimal.ZERO;
     
-    @NotNull(message = "Total is required")
-    @DecimalMin(value = "0.01", message = "Total must be greater than 0")
     private BigDecimal total;
     
     private String notes;

@@ -31,4 +31,6 @@ public class ProductRequestDTO {
     private Long categoryId;
 
     private String imageUrl;
+
+    private String sku;
 }

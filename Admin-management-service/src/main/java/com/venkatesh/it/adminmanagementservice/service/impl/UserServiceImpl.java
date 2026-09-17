@@ -26,8 +26,8 @@ public class UserServiceImpl implements UserService {
     @Override
     public Set<String> getUserRoles(Long userId) {
         if (!userServiceEnabled) {
-            log.info("User service integration disabled, defaulting to ADMIN role for user: {}", userId);
-            return Set.of("ROLE_ADMIN", "ROLE_SUPER_ADMIN");
+            log.warn("User service integration disabled - this is not recommended for production. Defaulting to ADMIN role for user: {}", userId);
+            return Set.of("ROLE_ADMIN");
         }
         
         try {
@@ -36,20 +36,22 @@ public class UserServiceImpl implements UserService {
             
             String[] roles = restTemplate.getForObject(url, String[].class);
             
-            if (roles != null) {
+            if (roles != null && roles.length > 0) {
                 Set<String> roleSet = new HashSet<>();
                 for (String role : roles) {
                     roleSet.add("ROLE_" + role.toUpperCase());
                 }
                 log.debug("User {} has roles: {}", userId, roleSet);
                 return roleSet;
+            } else {
+                log.warn("No roles returned for user: {}, defaulting to ADMIN role", userId);
+                return Set.of("ROLE_ADMIN");
             }
         } catch (Exception e) {
-            log.warn("Failed to fetch user roles for userId: {}, defaulting to ADMIN role. Error: {}", userId, e.getMessage());
+            log.error("Failed to fetch user roles for userId: {}. Error: {}", userId, e.getMessage());
+            log.warn("Defaulting to ADMIN role for user: {} due to service failure", userId);
+            return Set.of("ROLE_ADMIN");
         }
-        
-        log.info("Defaulting to ADMIN and SUPER_ADMIN roles for user: {}", userId);
-        return Set.of("ROLE_ADMIN", "ROLE_SUPER_ADMIN");
     }
 
     @Override

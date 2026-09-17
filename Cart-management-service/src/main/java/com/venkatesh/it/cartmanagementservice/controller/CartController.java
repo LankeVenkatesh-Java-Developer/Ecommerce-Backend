@@ -20,14 +20,14 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping("/{userId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
     public ResponseEntity<CartResponse> getCartByUserId(@PathVariable Long userId) {
         CartResponse response = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{userId}/items")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
     public ResponseEntity<CartResponse> addItemToCart(
             @PathVariable Long userId,
             @Valid @RequestBody CartItemRequest request) {
@@ -36,7 +36,7 @@ public class CartController {
     }
 
     @PutMapping("/{userId}/items/{productId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
     public ResponseEntity<CartResponse> updateCartItem(
             @PathVariable Long userId,
             @PathVariable Long productId,
@@ -46,7 +46,7 @@ public class CartController {
     }
 
     @DeleteMapping("/{userId}/items/{productId}")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
     public ResponseEntity<CartResponse> removeItemFromCart(
             @PathVariable Long userId,
             @PathVariable Long productId) {
@@ -55,7 +55,7 @@ public class CartController {
     }
 
     @DeleteMapping("/{userId}/clear")
-    @PreAuthorize("#userId == authentication.principal.id or hasRole('ADMIN')")
+    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
     public ResponseEntity<CartResponse> clearCart(@PathVariable Long userId) {
         CartResponse response = cartService.clearCart(userId);
         return ResponseEntity.ok(response);

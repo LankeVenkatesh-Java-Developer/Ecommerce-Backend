@@ -69,8 +69,8 @@ public class Order {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
     
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "order_id")
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
     
     @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)

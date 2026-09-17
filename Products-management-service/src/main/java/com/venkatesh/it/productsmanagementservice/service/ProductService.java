@@ -58,6 +58,13 @@ public class ProductService {
         product.setCategory(category);
         product.setImageUrl(requestDTO.getImageUrl());
         product.setStatus(requestDTO.getQuantity() > 0 ? Product.ProductStatus.ACTIVE : Product.ProductStatus.OUT_OF_STOCK);
+        
+        // Auto-generate SKU if not provided
+        if (requestDTO.getSku() == null || requestDTO.getSku().trim().isEmpty()) {
+            product.setSku(generateSku(requestDTO.getName()));
+        } else {
+            product.setSku(requestDTO.getSku());
+        }
 
         Product savedProduct = productRepository.save(product);
         return mapToResponseDTO(savedProduct);
@@ -157,5 +164,17 @@ public class ProductService {
                 product.getCreatedAt(),
                 product.getUpdatedAt()
         );
+    }
+
+    private String generateSku(String productName) {
+        // Generate SKU from product name: take first 3 letters, convert to uppercase, add timestamp
+        String prefix = productName.replaceAll("[^a-zA-Z]", "").toUpperCase();
+        if (prefix.length() > 3) {
+            prefix = prefix.substring(0, 3);
+        } else if (prefix.isEmpty()) {
+            prefix = "PRD";
+        }
+        long timestamp = System.currentTimeMillis() % 10000;
+        return prefix + "-" + timestamp;
     }
 }

@@ -36,37 +36,37 @@
 
 ### Get All Categories
 ```bash
-curl http://localhost:8083/api/categories
+curl http://localhost:8082/api/categories
 ```
 
 ### Get Products with Pagination (Home Page - With Filters)
 ```bash
-curl "http://localhost:8083/api/products?page=0&size=10"
+curl "http://localhost:8082/api/products?page=0&size=10"
 ```
 
 ### Get All Products (Dashboard - No Status Filtering)
 ```bash
-curl "http://localhost:8083/api/products/admin/all?page=0&size=10"
+curl "http://localhost:8082/api/products/admin/all?page=0&size=10"
 ```
 
 ### Filter by Category
 ```bash
-curl "http://localhost:8083/api/products?categoryId=1"
+curl "http://localhost:8082/api/products?categoryId=1"
 ```
 
 ### Search Products
 ```bash
-curl "http://localhost:8083/api/products?search=iphone"
+curl "http://localhost:8082/api/products?search=iphone"
 ```
 
 ### Combined Search + Category Filter
 ```bash
-curl "http://localhost:8083/api/products?search=phone&categoryId=1&page=0&size=20"
+curl "http://localhost:8082/api/products?search=phone&categoryId=1&page=0&size=20"
 ```
 
 ### Get Product Details
 ```bash
-curl http://localhost:8083/api/products/1
+curl http://localhost:8082/api/products/1
 ```
 
 ## React Integration Example
@@ -74,7 +74,7 @@ curl http://localhost:8083/api/products/1
 ### Setup API Service
 ```javascript
 // src/services/api.js
-const BASE_URL = 'http://localhost:8083/api';
+const BASE_URL = 'http://localhost:8082/api';
 
 export const api = {
   // Categories
@@ -280,7 +280,7 @@ export default ProductDetails;
 ### API Service
 ```javascript
 // src/services/api.js
-const BASE_URL = 'http://localhost:8083/api';
+const BASE_URL = 'http://localhost:8082/api';
 
 export const api = {
   async getCategories() {
@@ -334,7 +334,7 @@ export const api = {
       <button 
         :disabled="products.pageable?.pageNumber === 0"
         @click="changePage(filters.page - 1)"
-      >
+      >A
         Previous
       </button>
       <span>Page {{ products.pageable?.pageNumber + 1 }} of {{ products.totalPages }}</span>
@@ -540,19 +540,19 @@ try {
 
 ### Test with Browser
 1. Start the backend: `mvn spring-boot:run`
-2. Open browser: `http://localhost:8083/api/categories`
+2. Open browser: `http://localhost:8082/api/categories`
 3. You should see JSON response with categories
 
 ### Test with Frontend
 1. Start your frontend development server
-2. Make API calls to `http://localhost:8083/api/*`
+2. Make API calls to `http://localhost:8082/api/*`
 3. Check browser console for CORS errors (should be none)
 
 ## Common Issues
 
 ### CORS Errors
 If you see CORS errors in browser console:
-- Verify backend is running on port 8083
+- Verify backend is running on port 8082
 - Check SecurityConfig.java has CORS enabled
 - Ensure frontend is making requests to correct URL
 

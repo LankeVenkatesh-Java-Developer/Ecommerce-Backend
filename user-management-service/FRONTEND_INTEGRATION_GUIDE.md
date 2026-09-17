@@ -11,6 +11,42 @@
 
 ### Authentication Endpoints (Public)
 
+#### Forget Password (Request OTP)
+- **Endpoint**: `POST /api/v1/auth/forget-password` or `POST /api/v1/auth/forgot-password`
+- **Description**: Request OTP for password reset
+- **Request Body**:
+```json
+{
+  "email": "user@example.com"
+}
+```
+- **Response**: "OTP has been sent to your email address"
+
+#### Verify OTP
+- **Endpoint**: `POST /api/v1/auth/verify-otp`
+- **Description**: Verify the OTP received via email
+- **Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456"
+}
+```
+- **Response**: `true` or `false`
+
+#### Reset Password
+- **Endpoint**: `POST /api/v1/auth/reset-password`
+- **Description**: Reset password using verified OTP
+- **Request Body**:
+```json
+{
+  "email": "user@example.com",
+  "otp": "123456",
+  "newPassword": "NewSecurePassword123"
+}
+```
+- **Response**: "Password has been reset successfully"
+
 #### Register User
 - **Endpoint**: `POST /api/v1/auth/register`
 - **Description**: Register a new user
@@ -188,6 +224,33 @@ class UserManagementService {
     return data;
   }
 
+  async forgetPassword(email) {
+    const response = await fetch(`${API_BASE_URL}/auth/forget-password`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ email })
+    });
+    return response.text();
+  }
+
+  async verifyOtp(email, otp) {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-otp`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ email, otp })
+    });
+    return response.json();
+  }
+
+  async resetPassword(email, otp, newPassword) {
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+      body: JSON.stringify({ email, otp, newPassword })
+    });
+    return response.text();
+  }
+
   async getUserById(userId) {
     const response = await fetch(`${API_BASE_URL}/users/${userId}`, {
       method: 'GET',
@@ -251,7 +314,217 @@ const handleLogout = () => {
 };
 ```
 
-### 4. Protected Routes
+#### Forget Password Flow
+```javascript
+// Step 1: Request OTP
+const handleForgetPassword = async (email) => {
+  try {
+    const message = await userManagementService.forgetPassword(email);
+    console.log(message);
+    // Show OTP input field
+    setShowOtpInput(true);
+  } catch (error) {
+    console.error('Failed to send OTP:', error);
+  }
+};
+
+// Step 2: Verify OTP
+const handleVerifyOtp = async (email, otp) => {
+  try {
+    const isValid = await userManagementService.verifyOtp(email, otp);
+    if (isValid) {
+      // Show new password input field
+      setShowPasswordInput(true);
+    } else {
+      alert('Invalid OTP');
+    }
+  } catch (error) {
+    console.error('OTP verification failed:', error);
+  }
+};
+
+// Step 3: Reset Password
+const handleResetPassword = async (email, otp, newPassword) => {
+  try {
+    const message = await userManagementService.resetPassword(email, otp, newPassword);
+    console.log(message);
+    // Redirect to login page
+    alert('Password reset successful. Please login with your new password.');
+    window.location.href = '/login';
+  } catch (error) {
+    console.error('Password reset failed:', error);
+  }
+};
+```
+
+### 4. React Component Example for Password Reset
+
+Here's a complete React component implementing the password reset flow:
+
+```jsx
+import React, { useState } from 'react';
+import userManagementService from './userManagementService';
+
+const ForgetPasswordPage = () => {
+  const [email, setEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [step, setStep] = useState(1); // 1: email, 2: otp, 3: new password
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+
+  const handleRequestOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await userManagementService.forgetPassword(email);
+      setMessage(response);
+      setStep(2);
+    } catch (err) {
+      setError('Failed to send OTP. Please check your email and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    
+    try {
+      const isValid = await userManagementService.verifyOtp(email, otp);
+      if (isValid) {
+        setStep(3);
+        setMessage('OTP verified successfully');
+      } else {
+        setError('Invalid OTP. Please try again.');
+      }
+    } catch (err) {
+      setError('OTP verification failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+    
+    if (newPassword.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await userManagementService.resetPassword(email, otp, newPassword);
+      setMessage(response);
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
+    } catch (err) {
+      setError('Password reset failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="forget-password-container">
+      <h2>Reset Password</h2>
+      
+      {error && <div className="error-message">{error}</div>}
+      {message && <div className="success-message">{message}</div>}
+      
+      {step === 1 && (
+        <form onSubmit={handleRequestOtp}>
+          <div className="form-group">
+            <label>Email Address:</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              placeholder="Enter your registered email"
+            />
+          </div>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Sending...' : 'Send OTP'}
+          </button>
+        </form>
+      )}
+      
+      {step === 2 && (
+        <form onSubmit={handleVerifyOtp}>
+          <div className="form-group">
+            <label>Enter OTP:</label>
+            <input
+              type="text"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              required
+              maxLength={6}
+              placeholder="Enter 6-digit OTP"
+            />
+          </div>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Verifying...' : 'Verify OTP'}
+          </button>
+          <button type="button" onClick={() => setStep(1)}>
+            Back
+          </button>
+        </form>
+      )}
+      
+      {step === 3 && (
+        <form onSubmit={handleResetPassword}>
+          <div className="form-group">
+            <label>New Password:</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              required
+              placeholder="Enter new password (min 8 characters)"
+            />
+          </div>
+          <div className="form-group">
+            <label>Confirm Password:</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              placeholder="Confirm new password"
+            />
+          </div>
+          <button type="submit" disabled={loading}>
+            {loading ? 'Resetting...' : 'Reset Password'}
+          </button>
+          <button type="button" onClick={() => setStep(2)}>
+            Back
+          </button>
+        </form>
+      )}
+    </div>
+  );
+};
+
+export default ForgetPasswordPage;
+```
+
+### 5. Protected Routes
 Implement route guards in your frontend to check for JWT token:
 
 ```javascript

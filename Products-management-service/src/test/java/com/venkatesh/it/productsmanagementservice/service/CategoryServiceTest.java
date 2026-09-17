@@ -107,7 +107,6 @@ class CategoryServiceTest {
     @Test
     void updateCategory_WhenCategoryExistsAndNameNotTaken_ShouldUpdateCategory() {
         when(categoryRepository.findById(1L)).thenReturn(Optional.of(category));
-        when(categoryRepository.existsByName("Electronics")).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(category);
 
         CategoryDTO result = categoryService.updateCategory(1L, categoryRequestDTO);

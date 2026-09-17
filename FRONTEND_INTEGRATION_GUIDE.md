@@ -2,12 +2,13 @@
 
 ## Microservices Architecture Overview
 
-The e-commerce platform consists of 5 microservices:
+The e-commerce platform consists of 6 microservices:
 
 | Service | Port | Base URL | Description |
 |---------|------|----------|-------------|
 | User Management Service | 8081 | http://localhost:8081/api/v1 | User authentication, profiles, addresses |
 | Products Management Service | 8082 | http://localhost:8082 | Products, categories, inventory |
+| Cart Management Service | 8086 | http://localhost:8086/api/v1 | Shopping cart management |
 | Admin Management Service | 8083 | http://localhost:8083/api/admin | Admin dashboard, reports, configuration |
 | Order Management Service | 8084 | http://localhost:8084/api/v1 | Orders, payments, shipping |
 | Notification Management Service | 8085 | http://localhost:8085/api/notifications | Email & WhatsApp notifications |
@@ -66,6 +67,32 @@ All services (except Notification) use JWT authentication with the same secret k
 
 **Product Filters:**
 - Query params: `name`, `category`, `minPrice`, `maxPrice`, `inStock`, `page`, `size`, `sortBy`
+
+### Cart Management Service (Port 8086)
+
+**Cart Operations:**
+- `GET /cart/{userId}` - Get user's cart
+- `POST /cart/{userId}/items` - Add item to cart
+- `PUT /cart/{userId}/items/{productId}?quantity={quantity}` - Update cart item quantity
+- `DELETE /cart/{userId}/items/{productId}` - Remove item from cart
+- `DELETE /cart/{userId}/clear` - Clear entire cart
+- `GET /cart/admin/all` - Get all carts (Admin only)
+
+**Add Item to Cart Request Body:**
+```json
+{
+  "productId": 1,
+  "productName": "Product Name",
+  "productImageUrl": "https://example.com/image.jpg",
+  "quantity": 2,
+  "price": 99.99
+}
+```
+
+**Authentication Required:**
+- All cart endpoints require JWT authentication
+- Users can only access their own cart (userId must match authenticated user)
+- Admin users can access any cart
 
 ### Order Management Service (Port 8084)
 
@@ -158,6 +185,7 @@ All services are configured to allow CORS. Ensure your frontend origin is whitel
 Access API documentation at:
 - User Service: http://localhost:8081/swagger-ui.html
 - Products Service: http://localhost:8082/swagger-ui.html
+- Cart Service: http://localhost:8086/swagger-ui.html
 - Admin Service: http://localhost:8083/api/admin/swagger-ui.html
 - Order Service: http://localhost:8084/swagger-ui.html
 - Notification Service: http://localhost:8085/swagger-ui.html
@@ -169,6 +197,7 @@ Create `.env` file in frontend:
 ```env
 VITE_API_USER_SERVICE=http://localhost:8081/api/v1
 VITE_API_PRODUCTS_SERVICE=http://localhost:8082
+VITE_API_CART_SERVICE=http://localhost:8086/api/v1
 VITE_API_ADMIN_SERVICE=http://localhost:8083/api/admin
 VITE_API_ORDER_SERVICE=http://localhost:8084/api/v1
 VITE_API_NOTIFICATION_SERVICE=http://localhost:8085/api/notifications

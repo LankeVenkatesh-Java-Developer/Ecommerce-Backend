@@ -14,7 +14,6 @@ public class OrderItemRequest {
     @NotNull(message = "Product ID is required")
     private Long productId;
     
-    @NotBlank(message = "Product name is required")
     private String productName;
     
     @NotNull(message = "Quantity is required")

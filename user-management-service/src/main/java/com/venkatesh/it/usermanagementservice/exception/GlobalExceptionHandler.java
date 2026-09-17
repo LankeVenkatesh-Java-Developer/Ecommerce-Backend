@@ -57,13 +57,36 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(Exception ex) {
+        ex.printStackTrace();
         ErrorResponse error = ErrorResponse.builder()
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
                 .error("Internal Server Error")
-                .message("An unexpected error occurred")
+                .message("An unexpected error occurred: " + ex.getMessage())
                 .build();
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        String message = "Invalid request body format";
+        Throwable cause = ex.getCause();
+        if (cause != null) {
+            if (cause instanceof com.fasterxml.jackson.databind.JsonMappingException) {
+                message = "Invalid JSON format: " + cause.getMessage();
+            } else if (cause instanceof com.fasterxml.jackson.core.JsonParseException) {
+                message = "Invalid JSON syntax: " + cause.getMessage();
+            } else {
+                message = "Request body parsing error: " + cause.getMessage();
+            }
+        }
+        ErrorResponse error = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.BAD_REQUEST.value())
+                .error("Bad Request")
+                .message(message)
+                .build();
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @lombok.Data

@@ -1,5 +1,6 @@
 package com.venkatesh.it.ordermanagementservice.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.venkatesh.it.ordermanagementservice.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -25,6 +26,7 @@ public class Payment {
     
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "order_id", nullable = false)
+    @JsonIgnore
     private Order order;
     
     @Column(name = "payment_id", unique = true)

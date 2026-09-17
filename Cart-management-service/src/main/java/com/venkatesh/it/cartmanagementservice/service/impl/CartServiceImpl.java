@@ -60,6 +60,7 @@ public class CartServiceImpl implements CartService {
                     .quantity(request.getQuantity())
                     .price(request.getPrice())
                     .build();
+            cartItemRepository.save(newItem);
             cart.addItem(newItem);
             cartRepository.save(cart);
             log.info("Added new item to cart: {}", request.getProductId());
