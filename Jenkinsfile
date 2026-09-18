@@ -1,6 +1,8 @@
 pipeline {
     agent any
     
+    // Testing Poll SCM trigger
+    
     environment {
         DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
         GIT_CREDENTIALS = credentials('git-credentials')
