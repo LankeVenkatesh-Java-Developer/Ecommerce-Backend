@@ -19,22 +19,26 @@ pipeline {
 
         stage('Clean and Build') {
             steps {
-                def jdkHome = tool('JDK-17')
-                withEnv(["JAVA_HOME=${jdkHome}", "PATH+JDK=${jdkHome}\\bin"]) {
-                    bat """
-                        ${MAVEN_HOME}\\bin\\mvn clean install -DskipTests
-                    """
+                script {
+                    def jdkHome = tool('JDK-17')
+                    withEnv(["JAVA_HOME=${jdkHome}", "PATH+JDK=${jdkHome}\\bin"]) {
+                        bat """
+                            ${MAVEN_HOME}\\bin\\mvn clean install -DskipTests
+                        """
+                    }
                 }
             }
         }
         
         stage('Unit Tests') {
             steps {
-                def jdkHome = tool('JDK-17')
-                withEnv(["JAVA_HOME=${jdkHome}", "PATH+JDK=${jdkHome}\\bin"]) {
-                    bat """
-                        ${MAVEN_HOME}\\bin\\mvn test
-                    """
+                script {
+                    def jdkHome = tool('JDK-17')
+                    withEnv(["JAVA_HOME=${jdkHome}", "PATH+JDK=${jdkHome}\\bin"]) {
+                        bat """
+                            ${MAVEN_HOME}\\bin\\mvn test
+                        """
+                    }
                 }
             }
             post {
