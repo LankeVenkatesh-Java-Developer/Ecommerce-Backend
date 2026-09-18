@@ -124,7 +124,13 @@ pipeline {
             echo 'Build or deployment failed!'
         }
         always {
-            sh 'docker logout || true'
+            script {
+                try {
+                    sh 'docker logout || true'
+                } catch (Exception e) {
+                    echo "Docker logout failed: ${e.getMessage()}"
+                }
+            }
             cleanWs()
         }
     }
