@@ -5,7 +5,6 @@ pipeline {
     
     environment {
         DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
-        GIT_CREDENTIALS = credentials('git-credentials')
         MAVEN_HOME = tool('Maven-3.9')
         JAVA_HOME = tool('JDK-17')
     }
@@ -15,7 +14,7 @@ pipeline {
             steps {
                 git url: 'https://github.com/LankeVenkatesh-Java-Developer/Ecommerce-Backend.git',
                     branch: 'main',
-                    credentialsId: "${GIT_CREDENTIALS}"
+                    credentialsId: 'git-credentials'
             }
         }
         
@@ -132,8 +131,12 @@ pipeline {
                 } catch (Exception e) {
                     echo "Docker logout failed: ${e.getMessage()}"
                 }
+                try {
+                    cleanWs()
+                } catch (Exception e) {
+                    echo "Workspace cleanup failed: ${e.getMessage()}"
+                }
             }
-            cleanWs()
         }
     }
 }
