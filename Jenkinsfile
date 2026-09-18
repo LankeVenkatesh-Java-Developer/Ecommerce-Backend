@@ -20,16 +20,16 @@ pipeline {
         
         stage('Clean and Build') {
             steps {
-                sh """
-                    ${MAVEN_HOME}/bin/mvn clean install -DskipTests
+                bat """
+                    ${MAVEN_HOME}\\bin\\mvn clean install -DskipTests
                 """
             }
         }
         
         stage('Unit Tests') {
             steps {
-                sh """
-                    ${MAVEN_HOME}/bin/mvn test
+                bat """
+                    ${MAVEN_HOME}\\bin\\mvn test
                 """
             }
             post {
@@ -55,7 +55,7 @@ pipeline {
                     
                     services.each { service ->
                         dir(service) {
-                            sh """
+                            bat """
                                 docker build -t lankevenkatesh/${service}:${BUILD_NUMBER} .
                                 docker tag lankevenkatesh/${service}:${BUILD_NUMBER} lankevenkatesh/${service}:latest
                             """
@@ -68,10 +68,10 @@ pipeline {
         stage('Push Docker Images') {
             steps {
                 script {
-                    sh """
+                    bat """
                         echo ${DOCKER_CREDENTIALS_PSW} | docker login -u ${DOCKER_CREDENTIALS_USR} --password-stdin
                     """
-                    
+
                     def services = [
                         'user-management-service',
                         'Products-management-service',
@@ -82,9 +82,9 @@ pipeline {
                         'api-gateway-service',
                         'discovery-service'
                     ]
-                    
+
                     services.each { service ->
-                        sh """
+                        bat """
                             docker push lankevenkatesh/${service}:${BUILD_NUMBER}
                             docker push lankevenkatesh/${service}:latest
                         """
@@ -98,7 +98,7 @@ pipeline {
                 branch 'main'
             }
             steps {
-                sh """
+                bat """
                     docker-compose -f docker-compose.yml down
                     docker-compose -f docker-compose.yml up -d
                 """
@@ -109,7 +109,7 @@ pipeline {
             steps {
                 script {
                     sleep(time: 30, unit: 'SECONDS')
-                    sh """
+                    bat """
                         curl -f http://localhost:8087/actuator/health || exit 1
                     """
                 }
@@ -127,7 +127,7 @@ pipeline {
         always {
             script {
                 try {
-                    sh 'docker logout || true'
+                    bat 'docker logout || true'
                 } catch (Exception e) {
                     echo "Docker logout failed: ${e.getMessage()}"
                 }
