@@ -21,6 +21,7 @@ pipeline {
         stage('Clean and Build') {
             steps {
                 bat """
+                    set JAVA_HOME=${JAVA_HOME}
                     ${MAVEN_HOME}\\bin\\mvn clean install -DskipTests
                 """
             }
@@ -29,6 +30,7 @@ pipeline {
         stage('Unit Tests') {
             steps {
                 bat """
+                    set JAVA_HOME=${JAVA_HOME}
                     ${MAVEN_HOME}\\bin\\mvn test
                 """
             }
