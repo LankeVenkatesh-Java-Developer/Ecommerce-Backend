@@ -6,7 +6,6 @@ pipeline {
     environment {
         DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
         MAVEN_HOME = tool('Maven-3.9')
-        JAVA_HOME = tool('JDK-17')
     }
     
     stages {
@@ -17,22 +16,26 @@ pipeline {
                     credentialsId: 'git-credentials'
             }
         }
-        
+
         stage('Clean and Build') {
             steps {
-                bat """
-                    set JAVA_HOME=${JAVA_HOME}
-                    ${MAVEN_HOME}\\bin\\mvn clean install -DskipTests
-                """
+                def jdkHome = tool('JDK-17')
+                withEnv(["JAVA_HOME=${jdkHome}", "PATH+JDK=${jdkHome}\\bin"]) {
+                    bat """
+                        ${MAVEN_HOME}\\bin\\mvn clean install -DskipTests
+                    """
+                }
             }
         }
         
         stage('Unit Tests') {
             steps {
-                bat """
-                    set JAVA_HOME=${JAVA_HOME}
-                    ${MAVEN_HOME}\\bin\\mvn test
-                """
+                def jdkHome = tool('JDK-17')
+                withEnv(["JAVA_HOME=${jdkHome}", "PATH+JDK=${jdkHome}\\bin"]) {
+                    bat """
+                        ${MAVEN_HOME}\\bin\\mvn test
+                    """
+                }
             }
             post {
                 always {
