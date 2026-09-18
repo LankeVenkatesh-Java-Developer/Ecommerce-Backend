@@ -7,13 +7,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.context.TestPropertySource;
 
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
-@Disabled("Temporarily disabled due to H2 schema creation issues")
+@Disabled("Use @SpringBootTest integration tests instead for repository testing")
 class CartRepositoryTest {
 
     @Autowired

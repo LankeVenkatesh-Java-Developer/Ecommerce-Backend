@@ -31,7 +31,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @Transactional
-@Disabled("Temporarily disabled due to H2 schema creation issues")
 class CartIntegrationTest {
 
     @Autowired
@@ -122,8 +121,8 @@ class CartIntegrationTest {
                 .quantity(2)
                 .price(new BigDecimal("99.99"))
                 .build();
-        cartItemRepository.save(item);
-        cart.updateTotals();
+        item = cartItemRepository.save(item);
+        cart.addItem(item);
         cartRepository.save(cart);
 
         mockMvc.perform(put("/cart/items/1")
