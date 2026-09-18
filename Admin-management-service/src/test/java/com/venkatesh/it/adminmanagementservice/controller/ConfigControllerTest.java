@@ -5,6 +5,7 @@ import com.venkatesh.it.adminmanagementservice.service.ConfigService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
@@ -22,6 +23,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ConfigController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class ConfigControllerTest {
 
     @Autowired
@@ -34,13 +36,7 @@ class ConfigControllerTest {
 
     @BeforeEach
     void setUp() {
-        testConfig = ConfigDTO.builder()
-                .id(1L)
-                .serviceName("user-service")
-                .configKey("jwt.secret")
-                .configValue("test-secret")
-                .description("JWT secret key")
-                .build();
+        testConfig = new ConfigDTO("user-service", "jwt.secret", "test-secret", "JWT secret key", true);
     }
 
     @Test
@@ -48,7 +44,7 @@ class ConfigControllerTest {
     void whenGetAllConfigs_thenReturnConfigs() throws Exception {
         when(configService.getAllConfigs()).thenReturn(List.of(testConfig));
 
-        mockMvc.perform(get("/api/admin/config"))
+        mockMvc.perform(get("/config"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].serviceName").value("user-service"));
     }
@@ -60,7 +56,7 @@ class ConfigControllerTest {
         configs.put("jwt.secret", "test-secret");
         when(configService.getServiceConfigs(anyString())).thenReturn(configs);
 
-        mockMvc.perform(get("/api/admin/config/user-service"))
+        mockMvc.perform(get("/config/service/user-service"))
                 .andExpect(status().isOk());
     }
 
@@ -70,7 +66,7 @@ class ConfigControllerTest {
         Map<String, String> configs = new HashMap<>();
         configs.put("jwt.secret", "new-secret");
 
-        mockMvc.perform(put("/api/admin/config/user-service")
+        mockMvc.perform(put("/config/service/user-service")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"jwt.secret\":\"new-secret\"}"))
                 .andExpect(status().isOk());
@@ -82,7 +78,7 @@ class ConfigControllerTest {
         Map<String, String> config = new HashMap<>();
         when(configService.getNotificationConfig()).thenReturn(config);
 
-        mockMvc.perform(get("/api/admin/config/notification"))
+        mockMvc.perform(get("/config/notification"))
                 .andExpect(status().isOk());
     }
 
@@ -92,7 +88,7 @@ class ConfigControllerTest {
         Map<String, String> config = new HashMap<>();
         config.put("email.enabled", "true");
 
-        mockMvc.perform(put("/api/admin/config/notification")
+        mockMvc.perform(put("/config/notification")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email.enabled\":\"true\"}"))
                 .andExpect(status().isOk());
@@ -103,7 +99,7 @@ class ConfigControllerTest {
     void whenTestNotification_thenReturnOk() throws Exception {
         when(configService.testNotification(any())).thenReturn(true);
 
-        mockMvc.perform(post("/api/admin/config/notification/test")
+        mockMvc.perform(post("/config/test-notification")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"test@example.com\"}"))
                 .andExpect(status().isOk());

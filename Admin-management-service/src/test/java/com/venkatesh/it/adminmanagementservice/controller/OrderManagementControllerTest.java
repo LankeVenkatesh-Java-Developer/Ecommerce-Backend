@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
@@ -22,9 +20,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(UserManagementController.class)
+@WebMvcTest(OrderManagementController.class)
 @AutoConfigureMockMvc(addFilters = false)
-class UserManagementControllerTest {
+class OrderManagementControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -34,59 +32,66 @@ class UserManagementControllerTest {
 
     @BeforeEach
     void setUp() {
-        when(restTemplate.exchange(any(String.class), any(HttpMethod.class), any(HttpEntity.class), eq(Object.class)))
+        when(restTemplate.exchange(any(String.class), any(), any(), eq(Object.class)))
                 .thenReturn(new org.springframework.http.ResponseEntity<>(new HashMap<>(), org.springframework.http.HttpStatus.OK));
     }
 
     @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
-    void whenGetAllUsers_thenReturnOk() throws Exception {
-        mockMvc.perform(get("/users"))
-                .andExpect(status().isOk());
-    }
-
-
-    @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
-    void whenGetUserById_thenReturnOk() throws Exception {
-        mockMvc.perform(get("/users/1"))
+    @WithMockUser(roles = "ADMIN")
+    void whenGetAllOrders_thenReturnOk() throws Exception {
+        mockMvc.perform(get("/orders"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
-    void whenUpdateUser_thenReturnOk() throws Exception {
-        Map<String, Object> userData = new HashMap<>();
-        userData.put("firstName", "John");
+    @WithMockUser(roles = "ADMIN")
+    void whenGetOrderById_thenReturnOk() throws Exception {
+        mockMvc.perform(get("/orders/1"))
+                .andExpect(status().isOk());
+    }
 
-        mockMvc.perform(put("/users/1")
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void whenGetOrderByOrderNumber_thenReturnOk() throws Exception {
+        mockMvc.perform(get("/orders/number/ORD-001"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void whenGetOrdersByUserId_thenReturnOk() throws Exception {
+        mockMvc.perform(get("/orders/user/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void whenGetOrdersByCustomerId_thenReturnOk() throws Exception {
+        mockMvc.perform(get("/orders/customer/1"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void whenUpdateOrder_thenReturnOk() throws Exception {
+        mockMvc.perform(put("/orders/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"firstName\":\"John\"}"))
+                        .content("{\"status\":\"SHIPPED\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void whenCancelOrder_thenReturnOk() throws Exception {
+        mockMvc.perform(post("/orders/1/cancel"))
                 .andExpect(status().isOk());
     }
 
     @Test
     @WithMockUser(roles = "SUPER_ADMIN")
-    void whenDeleteUser_thenReturnOk() throws Exception {
-        mockMvc.perform(delete("/users/1"))
+    void whenDeleteOrder_thenReturnOk() throws Exception {
+        mockMvc.perform(delete("/orders/1"))
                 .andExpect(status().isOk());
     }
 
-    @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
-    void whenUpdateUserRole_thenReturnOk() throws Exception {
-        mockMvc.perform(patch("/users/1/role")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"role\":\"ADMIN\"}"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    @WithMockUser(roles = "SUPER_ADMIN")
-    void whenUpdateUserStatus_thenReturnOk() throws Exception {
-        mockMvc.perform(patch("/users/1/status")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\":\"ACTIVE\"}"))
-                .andExpect(status().isOk());
-    }
 }
