@@ -1,7 +1,7 @@
 pipeline {
     agent any
     
-    // Testing Poll SCM trigger - build 5
+    // Testing Poll SCM trigger - build 7
     
     environment {
         DOCKER_CREDENTIALS = credentials('docker-hub-credentials')
