@@ -15,13 +15,13 @@ spring:
         - id: cart-service
           uri: lb://cart-management-service
           predicates:
-            - Path=/cart/cart/**
+            - Path=/cart/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
             - JwtAuthenticationFilter
         
         - id: order-service
-          uri: lb://order-service
+          uri: lb://order-management-service
           predicates:
             - Path=/api/v1/orders/**
           filters:
@@ -55,16 +55,16 @@ spring:
         - id: products-service
           uri: lb://products-management-service
           predicates:
-            - Path=/api/api/products/**
+            - Path=/api/products/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
         
         - id: categories-service
           uri: lb://products-management-service
           predicates:
-            - Path=/api/api/categories/**
+            - Path=/api/categories/**
           filters:
-            - StripPrefix=1
+            - StripPrefix=0
         
         - id: admin-service
           uri: lb://admin-management-service
@@ -77,7 +77,7 @@ spring:
         - id: notification-service
           uri: lb://notification-management-service
           predicates:
-            - Path=/notification/**
+            - Path=/api/notifications/**
           filters:
             - StripPrefix=0
 

@@ -8,7 +8,7 @@
         <version>3.2.10</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
-    <groupId>com.Venkatesh.it</groupId>
+    <groupId>com.venkatesh.it</groupId>
     <artifactId>Cart-management-service</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Cart-management-service</name>

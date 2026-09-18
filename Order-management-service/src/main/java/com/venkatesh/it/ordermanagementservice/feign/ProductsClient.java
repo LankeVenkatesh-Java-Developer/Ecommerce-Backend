@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 
-@FeignClient(name = "products-service", url = "${products.service.url:http://localhost:8082}")
+@FeignClient(name = "products-management-service")
 public interface ProductsClient {
 
     @GetMapping("/api/products/{id}")

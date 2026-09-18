@@ -1,11 +1,10 @@
 package com.venkatesh.it.adminmanagementservice.service.impl;
 
+import com.venkatesh.it.adminmanagementservice.feign.UserClient;
 import com.venkatesh.it.adminmanagementservice.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,28 +14,16 @@ import java.util.Set;
 @Slf4j
 public class UserServiceImpl implements UserService {
 
-    private final RestTemplate restTemplate;
-    
-    @Value("${user.service.base-url:http://localhost:8081/api/users}")
-    private String userServiceBaseUrl;
-    
-    @Value("${user.service.enabled:false}")
-    private boolean userServiceEnabled;
+    private final UserClient userClient;
 
     @Override
     public Set<String> getUserRoles(Long userId) {
-        if (!userServiceEnabled) {
-            log.warn("User service integration disabled - this is not recommended for production. Defaulting to ADMIN role for user: {}", userId);
-            return Set.of("ROLE_ADMIN");
-        }
-        
         try {
-            String url = userServiceBaseUrl + "/" + userId + "/roles";
-            log.debug("Fetching user roles from: {}", url);
+            log.debug("Fetching user roles for userId: {}", userId);
             
-            String[] roles = restTemplate.getForObject(url, String[].class);
+            Set<String> roles = userClient.getUserRoles(userId);
             
-            if (roles != null && roles.length > 0) {
+            if (roles != null && !roles.isEmpty()) {
                 Set<String> roleSet = new HashSet<>();
                 for (String role : roles) {
                     roleSet.add("ROLE_" + role.toUpperCase());
@@ -56,16 +43,10 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean isValidUser(Long userId) {
-        if (!userServiceEnabled) {
-            log.info("User service integration disabled, assuming user is valid: {}", userId);
-            return true;
-        }
-        
         try {
-            String url = userServiceBaseUrl + "/" + userId;
-            log.debug("Validating user from: {}", url);
+            log.debug("Validating user with userId: {}", userId);
             
-            Boolean isValid = restTemplate.getForObject(url, Boolean.class);
+            Boolean isValid = userClient.isValidUser(userId);
             return isValid != null && isValid;
         } catch (Exception e) {
             log.warn("Failed to validate user with userId: {}, assuming valid. Error: {}", userId, e.getMessage());
