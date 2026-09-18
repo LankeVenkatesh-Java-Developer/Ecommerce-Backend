@@ -13,14 +13,12 @@ import java.math.BigDecimal;
 public class OrderItemRequest {
     @NotNull(message = "Product ID is required")
     private Long productId;
-    
-    private String productName;
-    
+
+    private String productName; // Optional - will be fetched from product service
+
     @NotNull(message = "Quantity is required")
     @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantity;
-    
-    @NotNull(message = "Price is required")
-    @DecimalMin(value = "0.01", message = "Price must be greater than 0")
-    private BigDecimal price;
+
+    private BigDecimal price; // Optional - will be validated against product service
 }

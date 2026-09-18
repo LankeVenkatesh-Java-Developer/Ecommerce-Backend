@@ -1,0 +1,145 @@
+server:
+  port: 8087
+
+spring:
+  application:
+    name: api-gateway-service
+  
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: cart-service
+          uri: lb://cart-management-service
+          predicates:
+            - Path=/cart/cart/**
+          filters:
+            - StripPrefix=1
+            - JwtAuthenticationFilter
+        
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/v1/orders/**
+          filters:
+            - StripPrefix=0
+            - JwtAuthenticationFilter
+        
+        - id: user-service-api
+          uri: lb://user-management-service
+          predicates:
+            - Path=/api/v1/**
+          filters:
+            - StripPrefix=0
+            - JwtAuthenticationFilter
+        
+        - id: user-service-addresses
+          uri: lb://user-management-service
+          predicates:
+            - Path=/users/addresses/**
+          filters:
+            - StripPrefix=0
+            - JwtAuthenticationFilter
+        
+        - id: user-service-users
+          uri: lb://user-management-service
+          predicates:
+            - Path=/users/**
+          filters:
+            - StripPrefix=0
+            - JwtAuthenticationFilter
+        
+        - id: products-service
+          uri: lb://products-management-service
+          predicates:
+            - Path=/api/api/products/**
+          filters:
+            - StripPrefix=1
+        
+        - id: categories-service
+          uri: lb://products-management-service
+          predicates:
+            - Path=/api/api/categories/**
+          filters:
+            - StripPrefix=1
+        
+        - id: admin-service
+          uri: lb://admin-management-service
+          predicates:
+            - Path=/admin/**
+          filters:
+            - StripPrefix=0
+            - JwtAuthenticationFilter
+        
+        - id: notification-service
+          uri: lb://notification-management-service
+          predicates:
+            - Path=/notification/**
+          filters:
+            - StripPrefix=0
+
+user:
+  service:
+    url: http://localhost:8081
+
+products:
+  service:
+    url: http://localhost:8082
+
+admin:
+  service:
+    url: http://localhost:8083
+
+order:
+  service:
+    url: http://localhost:8084
+
+cart:
+  service:
+    url: http://localhost:8086
+
+notification:
+  service:
+    url: http://localhost:8085
+
+jwt:
+  secret: mySecretKeyForJWTTokenGenerationWhichShouldBeLongEnoughForHS512Algorithm
+  expiration: 86400000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.venkatesh.it.apigatewayservice: DEBUG
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 5
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5000

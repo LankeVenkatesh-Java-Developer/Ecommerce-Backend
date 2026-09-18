@@ -36,14 +36,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             if (StringUtils.hasText(jwt) && jwtService.validateToken(jwt)) {
                 Long userId = jwtService.getUserIdFromJWT(jwt);
+                String userRole = jwtService.getRoleFromJWT(jwt);
 
-                // For now, grant USER role to all authenticated users
-                // In production, this should call User Management Service to get actual roles
+                // Extract role from JWT token
+                String role = userRole != null ? userRole : "USER";
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(
                                 userId,
                                 null,
-                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                                Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
                         );
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);

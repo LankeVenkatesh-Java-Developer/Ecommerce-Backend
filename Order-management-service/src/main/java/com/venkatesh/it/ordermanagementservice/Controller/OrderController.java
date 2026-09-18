@@ -22,7 +22,10 @@ public class OrderController {
     private final OrderService orderService;
     
     @PostMapping
-    public ResponseEntity<Order> createOrder(@Valid @RequestBody CreateOrderRequest request) {
+    public ResponseEntity<Order> createOrder(Authentication authentication, @Valid @RequestBody CreateOrderRequest request) {
+        // Override userId from request with authenticated user ID
+        Long authenticatedUserId = Long.parseLong(authentication.getName());
+        request.setUserId(authenticatedUserId);
         Order order = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(order);
     }

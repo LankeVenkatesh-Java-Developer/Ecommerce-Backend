@@ -18,6 +18,8 @@ public class ProductResponseDTO {
     private Integer quantity;
     private String status;
     private String imageUrl;
+    private String sku;
+    private String brand;
     private CategoryDTO category;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

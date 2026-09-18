@@ -4,6 +4,12 @@ echo Starting E-commerce Microservices
 echo ========================================
 echo.
 
+echo Starting Discovery Service (Eureka Server) on port 8761...
+cd discovery-service
+start "Discovery Service" cmd /k "mvn spring-boot:run"
+cd ..
+timeout /t 15 /nobreak
+
 echo Starting User Management Service on port 8081...
 cd user-management-service
 start "User Service" cmd /k "mvn spring-boot:run"
@@ -51,6 +57,7 @@ echo All services are starting...
 echo ========================================
 echo.
 echo Service URLs:
+echo - Discovery Service (Eureka): http://localhost:8761
 echo - User Service: http://localhost:8081/api/v1
 echo - Products Service: http://localhost:8082/api
 echo - Admin Service: http://localhost:8083/api/admin

@@ -33,4 +33,7 @@ public class ProductRequestDTO {
     private String imageUrl;
 
     private String sku;
+
+    @Size(max = 100, message = "Brand must not exceed 100 characters")
+    private String brand;
 }

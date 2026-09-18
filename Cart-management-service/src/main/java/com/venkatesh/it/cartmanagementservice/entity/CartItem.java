@@ -36,6 +36,12 @@ public class CartItem {
     @Column(name = "product_image_url")
     private String productImageUrl;
 
+    @Column(name = "product_sku")
+    private String productSku;
+
+    @Column(name = "product_brand")
+    private String productBrand;
+
     @Column(nullable = false)
     private Integer quantity;
 

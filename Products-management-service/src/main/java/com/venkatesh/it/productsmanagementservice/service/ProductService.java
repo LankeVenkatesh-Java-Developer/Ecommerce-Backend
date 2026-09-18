@@ -36,7 +36,11 @@ public class ProductService {
     }
 
     public Page<ProductListDTO> getAllProductsForAdmin(Pageable pageable) {
-        Page<Product> products = productRepository.findAll(pageable);
+        Page<Product> products = productRepository.findAll(
+            (root, query, criteriaBuilder) ->
+                criteriaBuilder.equal(root.get("deleted"), false),
+            pageable
+        );
         return products.map(this::mapToListDTO);
     }
 
@@ -50,6 +54,14 @@ public class ProductService {
         Category category = categoryRepository.findById(requestDTO.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + requestDTO.getCategoryId()));
 
+        // Check SKU uniqueness if provided
+        String sku = requestDTO.getSku();
+        if (sku != null && !sku.trim().isEmpty()) {
+            if (productRepository.existsBySku(sku)) {
+                throw new IllegalArgumentException("Product with SKU '" + sku + "' already exists");
+            }
+        }
+
         Product product = new Product();
         product.setName(requestDTO.getName());
         product.setDescription(requestDTO.getDescription());
@@ -57,13 +69,14 @@ public class ProductService {
         product.setQuantity(requestDTO.getQuantity());
         product.setCategory(category);
         product.setImageUrl(requestDTO.getImageUrl());
+        product.setBrand(requestDTO.getBrand());
         product.setStatus(requestDTO.getQuantity() > 0 ? Product.ProductStatus.ACTIVE : Product.ProductStatus.OUT_OF_STOCK);
-        
+
         // Auto-generate SKU if not provided
-        if (requestDTO.getSku() == null || requestDTO.getSku().trim().isEmpty()) {
+        if (sku == null || sku.trim().isEmpty()) {
             product.setSku(generateSku(requestDTO.getName()));
         } else {
-            product.setSku(requestDTO.getSku());
+            product.setSku(sku);
         }
 
         Product savedProduct = productRepository.save(product);
@@ -77,12 +90,22 @@ public class ProductService {
         Category category = categoryRepository.findById(requestDTO.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + requestDTO.getCategoryId()));
 
+        // Check SKU uniqueness if being changed
+        String newSku = requestDTO.getSku();
+        if (newSku != null && !newSku.trim().isEmpty() && !newSku.equals(product.getSku())) {
+            if (productRepository.existsBySkuAndIdNot(newSku, id)) {
+                throw new IllegalArgumentException("Product with SKU '" + newSku + "' already exists");
+            }
+            product.setSku(newSku);
+        }
+
         product.setName(requestDTO.getName());
         product.setDescription(requestDTO.getDescription());
         product.setPrice(requestDTO.getPrice());
         product.setQuantity(requestDTO.getQuantity());
         product.setCategory(category);
         product.setImageUrl(requestDTO.getImageUrl());
+        product.setBrand(requestDTO.getBrand());
 
         if (requestDTO.getQuantity() > 0) {
             product.setStatus(Product.ProductStatus.ACTIVE);
@@ -97,7 +120,11 @@ public class ProductService {
     public void deleteProduct(Long id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
-        productRepository.delete(product);
+
+        // Use soft delete to preserve historical order data
+        product.setDeleted(true);
+        product.setStatus(Product.ProductStatus.INACTIVE);
+        productRepository.save(product);
     }
 
     public ProductResponseDTO updateProductStatus(Long id, Product.ProductStatus status) {
@@ -138,7 +165,9 @@ public class ProductService {
                 product.getCategory().getId(),
                 product.getCategory().getName(),
                 product.getStatus().name(),
-                product.getImageUrl()
+                product.getImageUrl(),
+                product.getSku(),
+                product.getBrand()
         );
     }
 
@@ -160,6 +189,8 @@ public class ProductService {
                 product.getQuantity(),
                 product.getStatus().name(),
                 product.getImageUrl(),
+                product.getSku(),
+                product.getBrand(),
                 categoryDTO,
                 product.getCreatedAt(),
                 product.getUpdatedAt()

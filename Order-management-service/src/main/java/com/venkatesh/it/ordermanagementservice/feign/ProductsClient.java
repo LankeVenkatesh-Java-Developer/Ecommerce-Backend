@@ -27,6 +27,8 @@ public interface ProductsClient {
             BigDecimal price,
             Integer quantity,
             String status,
-            String imageUrl
+            String imageUrl,
+            String sku,
+            String brand
     ) {}
 }

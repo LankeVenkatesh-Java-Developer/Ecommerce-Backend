@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,52 +19,109 @@ public class CartController {
 
     private final CartService cartService;
 
-    @GetMapping("/{userId}")
-    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
-    public ResponseEntity<CartResponse> getCartByUserId(@PathVariable Long userId) {
+    @GetMapping
+    public ResponseEntity<CartResponse> getCurrentUserCart(Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         CartResponse response = cartService.getCartByUserId(userId);
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{userId}/items")
-    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
+    @GetMapping("/{userId}")
+    public ResponseEntity<CartResponse> getCartByUserId(@PathVariable Long userId, Authentication authentication) {
+        // Use authenticated user ID instead of path parameter for security
+        Long authenticatedUserId = Long.parseLong(authentication.getName());
+        CartResponse response = cartService.getCartByUserId(authenticatedUserId);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/items")
     public ResponseEntity<CartResponse> addItemToCart(
-            @PathVariable Long userId,
+            Authentication authentication,
             @Valid @RequestBody CartItemRequest request) {
+        Long userId = Long.parseLong(authentication.getName());
         CartResponse response = cartService.addItemToCart(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    @PutMapping("/{userId}/items/{productId}")
-    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
-    public ResponseEntity<CartResponse> updateCartItem(
+    @PostMapping("/{userId}/items")
+    public ResponseEntity<CartResponse> addItemToCartByUserId(
             @PathVariable Long userId,
+            Authentication authentication,
+            @Valid @RequestBody CartItemRequest request) {
+        // Use authenticated user ID instead of path parameter for security
+        Long authenticatedUserId = Long.parseLong(authentication.getName());
+        CartResponse response = cartService.addItemToCart(authenticatedUserId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/items/{productId}")
+    public ResponseEntity<CartResponse> updateCartItem(
+            Authentication authentication,
             @PathVariable Long productId,
             @RequestParam Integer quantity) {
+        Long userId = Long.parseLong(authentication.getName());
         CartResponse response = cartService.updateCartItem(userId, productId, quantity);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{userId}/items/{productId}")
-    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
-    public ResponseEntity<CartResponse> removeItemFromCart(
+    @PutMapping("/{userId}/items/{productId}")
+    public ResponseEntity<CartResponse> updateCartItemByUserId(
             @PathVariable Long userId,
+            @PathVariable Long productId,
+            @RequestParam Integer quantity,
+            Authentication authentication) {
+        // Use authenticated user ID instead of path parameter for security
+        Long authenticatedUserId = Long.parseLong(authentication.getName());
+        CartResponse response = cartService.updateCartItem(authenticatedUserId, productId, quantity);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/items/{productId}")
+    public ResponseEntity<CartResponse> removeItemFromCart(
+            Authentication authentication,
             @PathVariable Long productId) {
+        Long userId = Long.parseLong(authentication.getName());
         CartResponse response = cartService.removeItemFromCart(userId, productId);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/{userId}/clear")
-    @PreAuthorize("#userId == authentication.principal or hasRole('ADMIN')")
-    public ResponseEntity<CartResponse> clearCart(@PathVariable Long userId) {
+    @DeleteMapping("/{userId}/items/{productId}")
+    public ResponseEntity<CartResponse> removeItemFromCartByUserId(
+            @PathVariable Long userId,
+            @PathVariable Long productId,
+            Authentication authentication) {
+        // Use authenticated user ID instead of path parameter for security
+        Long authenticatedUserId = Long.parseLong(authentication.getName());
+        CartResponse response = cartService.removeItemFromCart(authenticatedUserId, productId);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/clear")
+    public ResponseEntity<CartResponse> clearCart(Authentication authentication) {
+        Long userId = Long.parseLong(authentication.getName());
         CartResponse response = cartService.clearCart(userId);
         return ResponseEntity.ok(response);
     }
 
+    @DeleteMapping("/{userId}/clear")
+    public ResponseEntity<CartResponse> clearCartByUserId(
+            @PathVariable Long userId,
+            Authentication authentication) {
+        // Use authenticated user ID instead of path parameter for security
+        Long authenticatedUserId = Long.parseLong(authentication.getName());
+        CartResponse response = cartService.clearCart(authenticatedUserId);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/admin/all")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<CartResponse>> getAllCarts() {
         List<CartResponse> response = cartService.getAllCarts();
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/admin/clear/{userId}")
+    public ResponseEntity<CartResponse> clearCartByUserId(@PathVariable Long userId) {
+        CartResponse response = cartService.clearCart(userId);
         return ResponseEntity.ok(response);
     }
 }

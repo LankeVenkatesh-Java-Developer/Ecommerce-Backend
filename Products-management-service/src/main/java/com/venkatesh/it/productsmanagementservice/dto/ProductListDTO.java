@@ -19,4 +19,6 @@ public class ProductListDTO {
     private String categoryName;
     private String status;
     private String imageUrl;
+    private String sku;
+    private String brand;
 }

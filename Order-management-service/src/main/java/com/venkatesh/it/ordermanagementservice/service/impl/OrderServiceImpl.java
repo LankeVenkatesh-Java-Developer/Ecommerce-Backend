@@ -10,6 +10,8 @@ import com.venkatesh.it.ordermanagementservice.entity.ShippingAddress;
 import com.venkatesh.it.ordermanagementservice.enums.OrderStatus;
 import com.venkatesh.it.ordermanagementservice.enums.PaymentStatus;
 import com.venkatesh.it.ordermanagementservice.exception.ResourceNotFoundException;
+import com.venkatesh.it.ordermanagementservice.feign.CartClient;
+import com.venkatesh.it.ordermanagementservice.feign.NotificationClient;
 import com.venkatesh.it.ordermanagementservice.feign.ProductsClient;
 import com.venkatesh.it.ordermanagementservice.repository.OrderRepository;
 import com.venkatesh.it.ordermanagementservice.service.OrderService;
@@ -30,9 +32,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 @RequiredArgsConstructor
 @Transactional
 public class OrderServiceImpl implements OrderService {
-    
+
     private final OrderRepository orderRepository;
     private final ProductsClient productsClient;
+    private final CartClient cartClient;
+    private final NotificationClient notificationClient;
     private static final AtomicInteger orderSequence = new AtomicInteger(1);
     
     @Override
@@ -53,8 +57,12 @@ public class OrderServiceImpl implements OrderService {
                     throw new ResourceNotFoundException("Product not found: " + itemRequest.getProductId());
                 }
                 if (product.quantity() < itemRequest.getQuantity()) {
-                    throw new IllegalStateException("Insufficient stock for product: " + product.name() + 
+                    throw new IllegalStateException("Insufficient stock for product: " + product.name() +
                             ". Available: " + product.quantity() + ", Requested: " + itemRequest.getQuantity());
+                }
+                // Validate product is active and not deleted
+                if (!"ACTIVE".equalsIgnoreCase(product.status())) {
+                    throw new IllegalStateException("Product is not available: " + product.name());
                 }
                 log.info("Product {} has sufficient stock: {}", product.name(), product.quantity());
             } catch (RestClientException e) {
@@ -80,32 +88,36 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subtotal = BigDecimal.ZERO;
         
         for (OrderItemRequest itemRequest : request.getItems()) {
-            String productName = itemRequest.getProductName();
-            if (productName == null || productName.isEmpty()) {
-                try {
-                    ProductsClient.ProductDTO product = productsClient.getProductById(itemRequest.getProductId());
-                    productName = product.name();
-                } catch (RestClientException e) {
-                    log.error("Failed to fetch product name for product ID: {}", itemRequest.getProductId(), e);
-                    productName = "Unknown Product";
+            // Get product details from service to validate price and get snapshot data
+            try {
+                ProductsClient.ProductDTO product = productsClient.getProductById(itemRequest.getProductId());
+
+                // Validate price matches current product price
+                if (itemRequest.getPrice() == null || itemRequest.getPrice().compareTo(product.price()) != 0) {
+                    log.warn("Price mismatch for product {}. Using current price: {}", product.name(), product.price());
                 }
+
+                OrderItem orderItem = OrderItem.builder()
+                        .productId(itemRequest.getProductId())
+                        .productName(product.name())
+                        .productSku(product.sku())
+                        .productBrand(product.brand())
+                        .quantity(itemRequest.getQuantity())
+                        .price(product.price()) // Use actual product price, not frontend
+                        .total(product.price().multiply(BigDecimal.valueOf(itemRequest.getQuantity())))
+                        .build();
+
+                order.addOrderItem(orderItem);
+                subtotal = subtotal.add(orderItem.getTotal());
+            } catch (RestClientException e) {
+                log.error("Failed to fetch product details for product ID: {}", itemRequest.getProductId(), e);
+                throw new IllegalStateException("Unable to fetch product details. Please try again later.");
             }
-            
-            OrderItem orderItem = OrderItem.builder()
-                    .productId(itemRequest.getProductId())
-                    .productName(productName)
-                    .quantity(itemRequest.getQuantity())
-                    .price(itemRequest.getPrice())
-                    .total(itemRequest.getPrice().multiply(BigDecimal.valueOf(itemRequest.getQuantity())))
-                    .build();
-            
-            order.addOrderItem(orderItem);
-            subtotal = subtotal.add(orderItem.getTotal());
         }
         
         order.setSubtotal(subtotal);
         order.setTotal(subtotal.add(order.getShippingCost()).add(order.getTax()));
-        
+
         if (request.getShippingAddress() != null) {
             ShippingAddressRequest addrReq = request.getShippingAddress();
             ShippingAddress shippingAddress = ShippingAddress.builder()
@@ -118,12 +130,39 @@ public class OrderServiceImpl implements OrderService {
                     .country(addrReq.getCountry())
                     .phone(addrReq.getPhone())
                     .build();
-            
+
             order.setShippingAddress(shippingAddress);
         }
-        
+
         Order savedOrder = orderRepository.save(order);
         log.info("Order created with ID: {} and order number: {}", savedOrder.getId(), savedOrder.getOrderNumber());
+
+        // Clear cart after successful order creation
+        try {
+            cartClient.clearCart(request.getUserId());
+            log.info("Cart cleared for user: {}", request.getUserId());
+        } catch (Exception e) {
+            log.error("Failed to clear cart for user: {}", request.getUserId(), e);
+            // Don't fail order creation if cart clear fails
+        }
+
+        // Send order created notification
+        try {
+            NotificationClient.NotificationRequest notificationRequest = new NotificationClient.NotificationRequest(
+                    "customer@example.com", // TODO: Get from user service
+                    null, // TODO: Get from user service
+                    "Customer",
+                    savedOrder.getOrderNumber(),
+                    "ORDER_CREATED",
+                    "BOTH"
+            );
+            notificationClient.sendOrderCreated(notificationRequest);
+            log.info("Order created notification sent for order: {}", savedOrder.getOrderNumber());
+        } catch (Exception e) {
+            log.error("Failed to send order created notification for order: {}", savedOrder.getOrderNumber(), e);
+            // Don't fail order creation if notification fails
+        }
+
         return savedOrder;
     }
     
@@ -160,7 +199,7 @@ public class OrderServiceImpl implements OrderService {
         
         if (request.getStatus() != null) {
             validateStatusTransition(order.getStatus(), request.getStatus());
-            
+
             // Deduct inventory when order is confirmed
             if (order.getStatus() == OrderStatus.PENDING && request.getStatus() == OrderStatus.CONFIRMED) {
                 for (OrderItem item : order.getItems()) {
@@ -173,14 +212,32 @@ public class OrderServiceImpl implements OrderService {
                     }
                 }
             }
-            
+
             order.setStatus(request.getStatus());
+
+            // Send notification for status changes
+            try {
+                if (request.getStatus() == OrderStatus.DELIVERED) {
+                    NotificationClient.NotificationRequest notificationRequest = new NotificationClient.NotificationRequest(
+                            "customer@example.com", // TODO: Get from user service
+                            null, // TODO: Get from user service
+                            "Customer",
+                            order.getOrderNumber(),
+                            "ORDER_DELIVERED",
+                            "BOTH"
+                    );
+                    notificationClient.sendOrderDelivered(notificationRequest);
+                    log.info("Order delivered notification sent for order: {}", order.getOrderNumber());
+                }
+            } catch (Exception e) {
+                log.error("Failed to send order status notification for order: {}", order.getOrderNumber(), e);
+            }
         }
-        
+
         if (request.getNotes() != null) {
             order.setNotes(request.getNotes());
         }
-        
+
         Order updatedOrder = orderRepository.save(order);
         log.info("Order {} updated successfully", orderId);
         return updatedOrder;
@@ -210,6 +267,23 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         Order cancelledOrder = orderRepository.save(order);
         log.info("Order {} cancelled successfully", orderId);
+
+        // Send cancellation notification
+        try {
+            NotificationClient.NotificationRequest notificationRequest = new NotificationClient.NotificationRequest(
+                    "customer@example.com", // TODO: Get from user service
+                    null, // TODO: Get from user service
+                    "Customer",
+                    order.getOrderNumber(),
+                    "ORDER_CANCELLED",
+                    "BOTH"
+            );
+            notificationClient.sendOrderCancelled(notificationRequest);
+            log.info("Order cancelled notification sent for order: {}", order.getOrderNumber());
+        } catch (Exception e) {
+            log.error("Failed to send order cancelled notification for order: {}", order.getOrderNumber(), e);
+        }
+
         return cancelledOrder;
     }
     

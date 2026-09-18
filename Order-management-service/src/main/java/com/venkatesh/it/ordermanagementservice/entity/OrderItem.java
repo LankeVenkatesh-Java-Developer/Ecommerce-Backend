@@ -29,16 +29,22 @@ public class OrderItem {
     
     @Column(name = "product_id", nullable = false)
     private Long productId;
-    
+
     @Column(name = "product_name", nullable = false)
     private String productName;
-    
+
+    @Column(name = "product_sku")
+    private String productSku;
+
+    @Column(name = "product_brand")
+    private String productBrand;
+
     @Column(nullable = false)
     private Integer quantity;
-    
+
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal price;
-    
+
     @Column(precision = 10, scale = 2, nullable = false)
     private BigDecimal total;
     

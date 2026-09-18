@@ -10,5 +10,8 @@
     "type": "git",
     "url": "https://github.com/LankeVenkatesh-Java-Developer/Ecommerce-Backend.git"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "vite": "^8.3.0"
+  }
 }

@@ -1,0 +1,57 @@
+spring:
+  application:
+    name: notification-management-service
+  
+  mail:
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:lankevenkatesh314@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:gfap dwkm huyl bgau}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+twilio:
+  account:
+    sid: ${TWILIO_ACCOUNT_SID:your-twilio-account-sid}
+  auth:
+    token: ${TWILIO_AUTH_TOKEN:your-twilio-auth-token}
+  whatsapp:
+    from:
+      number: ${TWILIO_WHATSAPP_FROM_NUMBER:+14155238886}
+
+server:
+  port: 8085
+
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 5
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5000

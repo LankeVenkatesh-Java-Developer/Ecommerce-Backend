@@ -39,6 +39,9 @@ public class Product {
     @Column(length = 100)
     private String brand;
 
+    @Column(name = "deleted", nullable = false)
+    private Boolean deleted = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id", nullable = false)
     private Category category;
