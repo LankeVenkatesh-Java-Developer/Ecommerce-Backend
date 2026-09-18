@@ -2,6 +2,7 @@ package com.venkatesh.it.productsmanagementservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 @Entity
 @Table(name = "products")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Product {
@@ -40,6 +42,7 @@ public class Product {
     private String brand;
 
     @Column(name = "deleted", nullable = false)
+    @Builder.Default
     private Boolean deleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,6 +51,7 @@ public class Product {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    @Builder.Default
     private ProductStatus status = ProductStatus.ACTIVE;
 
     @Column(length = 500)

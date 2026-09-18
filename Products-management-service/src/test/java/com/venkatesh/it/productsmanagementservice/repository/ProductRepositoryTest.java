@@ -1,6 +1,7 @@
 package com.venkatesh.it.productsmanagementservice.repository;
 
 import com.venkatesh.it.productsmanagementservice.entity.Category;
+import com.venkatesh.it.productsmanagementservice.entity.CategoryStatus;
 import com.venkatesh.it.productsmanagementservice.entity.Product;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +35,7 @@ class ProductRepositoryTest {
                 .name("Electronics")
                 .description("Electronic items")
                 .active(true)
-                .status(Category.CategoryStatus.ACTIVE)
+                .status(CategoryStatus.ACTIVE)
                 .build();
         testCategory = entityManager.persist(testCategory);
 

@@ -28,7 +28,7 @@ class OtpRepositoryTest {
         testOtp = Otp.builder()
                 .email("test@example.com")
                 .otpCode("123456")
-                .expiryTime(LocalDateTime.now().plusMinutes(5))
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
                 .isUsed(false)
                 .build();
     }
@@ -69,7 +69,7 @@ class OtpRepositoryTest {
         Otp otp2 = Otp.builder()
                 .email("test@example.com")
                 .otpCode("654321")
-                .expiryTime(LocalDateTime.now().plusMinutes(5))
+                .expiresAt(LocalDateTime.now().plusMinutes(5))
                 .isUsed(false)
                 .build();
         entityManager.persist(otp2);

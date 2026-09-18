@@ -2,6 +2,7 @@ package com.venkatesh.it.productsmanagementservice.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
@@ -14,6 +15,7 @@ import java.util.List;
 @Entity
 @Table(name = "categories")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Category {
@@ -32,10 +34,12 @@ public class Category {
     private String imageUrl;
 
     @Column(nullable = false)
+    @Builder.Default
     private Boolean active = true;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
+    @Builder.Default
     private CategoryStatus status = CategoryStatus.ACTIVE;
 
     @CreationTimestamp

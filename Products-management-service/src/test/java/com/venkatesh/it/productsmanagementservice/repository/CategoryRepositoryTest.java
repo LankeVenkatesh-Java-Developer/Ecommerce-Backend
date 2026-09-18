@@ -1,6 +1,7 @@
 package com.venkatesh.it.productsmanagementservice.repository;
 
 import com.venkatesh.it.productsmanagementservice.entity.Category;
+import com.venkatesh.it.productsmanagementservice.entity.CategoryStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +29,7 @@ class CategoryRepositoryTest {
                 .name("Electronics")
                 .description("Electronic items")
                 .active(true)
-                .status(Category.CategoryStatus.ACTIVE)
+                .status(CategoryStatus.ACTIVE)
                 .build();
     }
 

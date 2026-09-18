@@ -1,6 +1,7 @@
 package com.venkatesh.it.ordermanagementservice.Repository;
 
 import com.venkatesh.it.ordermanagementservice.entity.Order;
+import com.venkatesh.it.ordermanagementservice.repository.OrderItemRepository;
 import com.venkatesh.it.ordermanagementservice.entity.OrderItem;
 import com.venkatesh.it.ordermanagementservice.enums.OrderStatus;
 import com.venkatesh.it.ordermanagementservice.enums.PaymentStatus;
