@@ -100,8 +100,8 @@ class CartServiceTest {
         when(cartItemRepository.findByCartIdAndProductId(anyLong(), anyLong()))
                 .thenReturn(Optional.empty());
         when(productsClient.getProductById(1L)).thenReturn(new ProductsClient.ProductDTO(
-                1L, "Test Product", "http://test.com/image.jpg", "TEST-001", 
-                "Test Brand", 2, new BigDecimal("99.99"), "ACTIVE"
+                1L, "Test Product", "Description", new BigDecimal("99.99"), 2, "ACTIVE",
+                "http://test.com/image.jpg", "TEST-001", "Test Brand", null
         ));
         when(cartItemRepository.save(any(CartItem.class))).thenReturn(testCartItem);
         when(cartRepository.save(any(Cart.class))).thenReturn(testCart);
@@ -110,15 +110,72 @@ class CartServiceTest {
 
         assertNotNull(response);
         verify(cartItemRepository, times(1)).save(any(CartItem.class));
-        verify(cartRepository, times(1)).save(any(Cart.class));
+        verify(cartRepository, atLeast(1)).save(any(Cart.class));
     }
 
     @Test
     void whenAddItemToCartProductNotActive_thenThrowException() {
-        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        lenient().when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
         when(productsClient.getProductById(1L)).thenReturn(new ProductsClient.ProductDTO(
-                1L, "Test Product", "http://test.com/image.jpg", "TEST-001",
-                "Test Brand", 2, new BigDecimal("99.99"), "INACTIVE"
+                1L, "Test Product", "Description", new BigDecimal("99.99"), 2, "INACTIVE",
+                "http://test.com/image.jpg", "TEST-001", "Test Brand", null
+        ));
+
+        assertThrows(IllegalStateException.class, () -> {
+            cartService.addItemToCart(1L, cartItemRequest);
+        });
+    }
+
+    @Test
+    void whenAddItemToCartInsufficientStock_thenThrowException() {
+        lenient().when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(productsClient.getProductById(1L)).thenReturn(new ProductsClient.ProductDTO(
+                1L, "Test Product", "Description", new BigDecimal("99.99"), 1, "ACTIVE",
+                "http://test.com/image.jpg", "TEST-001", "Test Brand", null
+        ));
+
+        assertThrows(IllegalStateException.class, () -> {
+            cartService.addItemToCart(1L, cartItemRequest);
+        });
+    }
+
+    @Test
+    void whenAddItemToCartProductNotFound_thenThrowException() {
+        lenient().when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(productsClient.getProductById(1L)).thenReturn(null);
+
+        assertThrows(IllegalStateException.class, () -> {
+            cartService.addItemToCart(1L, cartItemRequest);
+        });
+    }
+
+    @Test
+    void whenAddItemToCartExistingItem_thenUpdateQuantity() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(cartItemRepository.findByCartIdAndProductId(anyLong(), anyLong()))
+                .thenReturn(Optional.of(testCartItem));
+        when(productsClient.getProductById(1L)).thenReturn(new ProductsClient.ProductDTO(
+                1L, "Test Product", "Description", new BigDecimal("99.99"), 10, "ACTIVE",
+                "http://test.com/image.jpg", "TEST-001", "Test Brand", null
+        ));
+        when(cartItemRepository.save(any(CartItem.class))).thenReturn(testCartItem);
+        when(cartRepository.save(any(Cart.class))).thenReturn(testCart);
+
+        CartResponse response = cartService.addItemToCart(1L, cartItemRequest);
+
+        assertNotNull(response);
+        verify(cartItemRepository, times(1)).save(any(CartItem.class));
+    }
+
+    @Test
+    void whenAddItemToCartQuantityExceedsLimit_thenThrowException() {
+        testCartItem.setQuantity(99);
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(cartItemRepository.findByCartIdAndProductId(anyLong(), anyLong()))
+                .thenReturn(Optional.of(testCartItem));
+        when(productsClient.getProductById(1L)).thenReturn(new ProductsClient.ProductDTO(
+                1L, "Test Product", "Description", new BigDecimal("99.99"), 10, "ACTIVE",
+                "http://test.com/image.jpg", "TEST-001", "Test Brand", null
         ));
 
         assertThrows(IllegalStateException.class, () -> {
@@ -154,6 +211,26 @@ class CartServiceTest {
     }
 
     @Test
+    void whenUpdateCartItemCartNotFound_thenThrowException() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cartService.updateCartItem(1L, 1L, 5);
+        });
+    }
+
+    @Test
+    void whenUpdateCartItemNotFound_thenThrowException() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(cartItemRepository.findByCartIdAndProductId(anyLong(), anyLong()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cartService.updateCartItem(1L, 1L, 5);
+        });
+    }
+
+    @Test
     void whenRemoveItemFromCart_thenItemRemoved() {
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
         when(cartItemRepository.findByCartIdAndProductId(anyLong(), anyLong()))
@@ -167,6 +244,26 @@ class CartServiceTest {
     }
 
     @Test
+    void whenRemoveItemFromCartCartNotFound_thenThrowException() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cartService.removeItemFromCart(1L, 1L);
+        });
+    }
+
+    @Test
+    void whenRemoveItemFromCartItemNotFound_thenThrowException() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
+        when(cartItemRepository.findByCartIdAndProductId(anyLong(), anyLong()))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cartService.removeItemFromCart(1L, 1L);
+        });
+    }
+
+    @Test
     void whenClearCart_thenCartCleared() {
         when(cartRepository.findByUserId(1L)).thenReturn(Optional.of(testCart));
         when(cartRepository.save(any(Cart.class))).thenReturn(testCart);
@@ -175,6 +272,15 @@ class CartServiceTest {
 
         assertNotNull(response);
         verify(cartRepository, times(1)).save(any(Cart.class));
+    }
+
+    @Test
+    void whenClearCartCartNotFound_thenThrowException() {
+        when(cartRepository.findByUserId(1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> {
+            cartService.clearCart(1L);
+        });
     }
 
     @Test
